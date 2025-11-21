@@ -169,21 +169,22 @@ class DatabasePool:
         """Create database indexes for query optimization"""
         try:
             with self.get_connection() as conn:
-                # Create indexes for HSP table
+                # Create indexes for existing tables
                 indexes = [
-                    "CREATE INDEX IF NOT EXISTS idx_hsp_route ON hsp_records(origin_crs, destination_crs)",
-                    "CREATE INDEX IF NOT EXISTS idx_hsp_toc ON hsp_records(toc)",
-                    "CREATE INDEX IF NOT EXISTS idx_hsp_date ON hsp_records(service_date)",
-                    "CREATE INDEX IF NOT EXISTS idx_hsp_composite ON hsp_records(origin_crs, destination_crs, toc)",
+                    # Indexes for HSP tables (actual table names)
+                    "CREATE INDEX IF NOT EXISTS idx_hsp_metrics_route ON hsp_service_metrics(origin, destination)",
+                    "CREATE INDEX IF NOT EXISTS idx_hsp_metrics_toc ON hsp_service_metrics(toc_code)",
+                    "CREATE INDEX IF NOT EXISTS idx_hsp_details_rid ON hsp_service_details(rid)",
+                    "CREATE INDEX IF NOT EXISTS idx_hsp_details_date ON hsp_service_details(date_of_service)",
                     
-                    # Create indexes for fares table
-                    "CREATE INDEX IF NOT EXISTS idx_fares_route ON fares(origin_crs, destination_crs)",
-                    "CREATE INDEX IF NOT EXISTS idx_fares_ticket ON fares(ticket_type)",
-                    "CREATE INDEX IF NOT EXISTS idx_fares_updated ON fares(updated_at)",
+                    # Create indexes for fare_cache table (actual table name)
+                    "CREATE INDEX IF NOT EXISTS idx_fare_cache_route ON fare_cache(origin, destination)",
+                    "CREATE INDEX IF NOT EXISTS idx_fare_cache_ticket ON fare_cache(ticket_type)",
+                    "CREATE INDEX IF NOT EXISTS idx_fare_cache_updated ON fare_cache(updated_at)",
                     
                     # Create indexes for stats tracking
                     "CREATE INDEX IF NOT EXISTS idx_route_stats ON route_statistics(origin, destination)",
-                    "CREATE INDEX IF NOT EXISTS idx_query_log ON query_log(timestamp)"
+                    "CREATE INDEX IF NOT EXISTS idx_route_stats_date ON route_statistics(calculation_date)"
                 ]
                 
                 for idx_sql in indexes:
@@ -343,32 +344,19 @@ class OptimizedQueries:
                            origin: str, 
                            destination: str, 
                            toc: str = None) -> Dict[str, Any]:
-        """Get optimized prediction data"""
-        if toc:
+        """Get optimized prediction data from route_statistics"""
+        # Use route_statistics table which contains pre-calculated statistics
             query = """
                 SELECT 
-                    AVG(CASE WHEN is_late = 0 THEN 1.0 ELSE 0.0 END) as on_time_rate,
-                    AVG(delay_minutes) as avg_delay,
-                    COUNT(*) as sample_size,
-                    STDDEV(delay_minutes) as delay_stddev
-                FROM hsp_records
-                WHERE origin_crs = :origin 
-                AND destination_crs = :destination
-                AND toc = :toc
-                AND service_date > date('now', '-30 days')
-            """
-            params = {"origin": origin, "destination": destination, "toc": toc}
-        else:
-            query = """
-                SELECT 
-                    AVG(CASE WHEN is_late = 0 THEN 1.0 ELSE 0.0 END) as on_time_rate,
-                    AVG(delay_minutes) as avg_delay,
-                    COUNT(*) as sample_size,
-                    STDDEV(delay_minutes) as delay_stddev
-                FROM hsp_records
-                WHERE origin_crs = :origin 
-                AND destination_crs = :destination
-                AND service_date > date('now', '-30 days')
+                on_time_percentage / 100.0 as on_time_rate,
+                avg_delay_minutes as avg_delay,
+                total_services as sample_size,
+                0.0 as delay_stddev
+            FROM route_statistics
+            WHERE origin = :origin 
+            AND destination = :destination
+            ORDER BY calculation_date DESC
+            LIMIT 1
             """
             params = {"origin": origin, "destination": destination}
         
@@ -377,18 +365,17 @@ class OptimizedQueries:
     
     @staticmethod
     def get_popular_routes(pool: DatabasePool, limit: int = 10) -> List[Dict]:
-        """Get most popular routes"""
+        """Get most popular routes from route_statistics"""
         query = """
             SELECT 
-                origin_crs as origin,
-                destination_crs as destination,
-                COUNT(*) as query_count,
-                AVG(delay_minutes) as avg_delay,
-                AVG(CASE WHEN is_late = 0 THEN 1.0 ELSE 0.0 END) as on_time_rate
-            FROM hsp_records
-            WHERE service_date > date('now', '-7 days')
-            GROUP BY origin_crs, destination_crs
-            ORDER BY query_count DESC
+                origin,
+                destination,
+                total_services as query_count,
+                avg_delay_minutes as avg_delay,
+                on_time_percentage / 100.0 as on_time_rate
+            FROM route_statistics
+            WHERE calculation_date > date('now', '-30 days')
+            ORDER BY total_services DESC
             LIMIT :limit
         """
         return pool.execute_query(query, {"limit": limit})
@@ -397,21 +384,26 @@ class OptimizedQueries:
     def get_route_statistics(pool: DatabasePool, 
                             origin: str, 
                             destination: str) -> Dict[str, Any]:
-        """Get detailed route statistics"""
+        """Get detailed route statistics from route_statistics table"""
         query = """
             SELECT 
-                COUNT(*) as total_services,
-                AVG(delay_minutes) as avg_delay,
-                MAX(delay_minutes) as max_delay,
-                MIN(delay_minutes) as min_delay,
-                AVG(CASE WHEN is_late = 0 THEN 1.0 ELSE 0.0 END) * 100 as on_time_percentage,
-                AVG(CASE WHEN delay_minutes > 5 THEN 1.0 ELSE 0.0 END) * 100 as delay_5_percentage,
-                AVG(CASE WHEN delay_minutes > 10 THEN 1.0 ELSE 0.0 END) * 100 as delay_10_percentage,
-                AVG(CASE WHEN delay_minutes > 30 THEN 1.0 ELSE 0.0 END) * 100 as delay_30_percentage
-            FROM hsp_records
-            WHERE origin_crs = :origin 
-            AND destination_crs = :destination
-            AND service_date > date('now', '-30 days')
+                total_services,
+                avg_delay_minutes as avg_delay,
+                max_delay_minutes as max_delay,
+                median_delay_minutes as median_delay,
+                on_time_percentage,
+                time_to_5_percentage as delay_5_percentage,
+                time_to_10_percentage as delay_10_percentage,
+                time_to_30_percentage as delay_30_percentage,
+                cancelled_percentage,
+                reliability_score,
+                reliability_grade,
+                calculation_date
+            FROM route_statistics
+            WHERE origin = :origin 
+            AND destination = :destination
+            ORDER BY calculation_date DESC
+            LIMIT 1
         """
         results = pool.execute_query(query, {"origin": origin, "destination": destination})
         return results[0] if results else {}

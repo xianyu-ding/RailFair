@@ -360,8 +360,17 @@ def cached(prefix: str, ttl: CacheTTL = CacheTTL.DEFAULT):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             # Generate cache key from function arguments
+            # Include both positional args and kwargs for proper cache key generation
+            import inspect
+            sig = inspect.signature(func)
+            bound_args = sig.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+            
+            # Convert bound arguments to dict, excluding 'self' if present
+            cache_params = {k: v for k, v in bound_args.arguments.items() if k != 'self'}
+            
             cache = get_cache()
-            cache_key = cache._generate_key(prefix, kwargs)
+            cache_key = cache._generate_key(prefix, cache_params)
             
             # Try to get from cache
             cached_value = cache.get(cache_key)
@@ -382,8 +391,17 @@ def cached(prefix: str, ttl: CacheTTL = CacheTTL.DEFAULT):
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
             # Generate cache key from function arguments
+            # Include both positional args and kwargs for proper cache key generation
+            import inspect
+            sig = inspect.signature(func)
+            bound_args = sig.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+            
+            # Convert bound arguments to dict, excluding 'self' if present
+            cache_params = {k: v for k, v in bound_args.arguments.items() if k != 'self'}
+            
             cache = get_cache()
-            cache_key = cache._generate_key(prefix, kwargs)
+            cache_key = cache._generate_key(prefix, cache_params)
             
             # Try to get from cache
             cached_value = cache.get(cache_key)

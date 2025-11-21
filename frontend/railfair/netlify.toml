@@ -5,8 +5,11 @@
 [[redirects]]
   # Cloudflare Workers 后端地址
   # 所有 /api/* 请求会被代理到 Cloudflare Workers
+  # 如果后端部署在 api.railfair.uk，使用下面的配置
+  # 如果后端部署在 workers.dev，替换为你的 workers.dev 地址
   from = "/api/*"
   to = "https://api.railfair.uk/api/:splat"
   status = 200
   force = true
+  headers = { X-From = "Netlify" }
 

@@ -1384,12 +1384,12 @@ class FareComparator:
 # 辅助函数
 # ============================================
 
-def _should_update_fares_data(cache: FareCache, zip_path: str, max_age_days: int = 1) -> bool:
+def _should_update_fares_data(cache: FareCache, zip_path: str, max_age_days: int = 30) -> bool:
     """
     检查是否需要更新票价数据
     
-    根据要求：票价数据每天更新一次
-    这里实现：如果ZIP文件存在且未超过1天，则不需要重新下载
+    根据要求：票价数据每月更新一次（NRDP每周更新，我们每月检查一次）
+    这里实现：如果ZIP文件存在且未超过30天，则不需要重新下载
     
     Args:
         cache: 票价缓存实例
@@ -1474,12 +1474,12 @@ def initialize_fares_system(
     logger.info(f"   账户: {nrdp_email}")
     
     try:
-        # 检查是否需要更新数据（每天更新一次）
+        # 检查是否需要更新数据（每月更新一次）
         zip_path = os.path.join(os.path.dirname(db_path) if os.path.dirname(db_path) else '.', "fares_data.zip")
-        needs_update = _should_update_fares_data(cache, zip_path, max_age_days=1)
+        needs_update = _should_update_fares_data(cache, zip_path, max_age_days=30)
         
         if not needs_update:
-            logger.info("✅ 使用现有缓存数据（数据未超过1天）")
+            logger.info("✅ 使用现有缓存数据（数据未超过30天）")
             stats = cache.get_cache_stats()
             if stats['total_records'] > 0:
                 logger.info(f"   缓存中有 {stats['total_records']} 条票价记录")

@@ -664,6 +664,225 @@ async def get_route_statistics_endpoint(origin: str, destination: str):
         "cache_ttl_seconds": CacheTTL.ROUTE_STATS.value
     }
 
+@app.get("/api/routes/{origin}/{destination}/stops")
+async def get_route_stops_endpoint(origin: str, destination: str, departure_date: Optional[str] = None):
+    """
+    Get intermediate stops for a route from future timetable data
+    
+    Priority:
+    1. NRDP Timetable (future scheduled services) - preferred
+    2. Historical HSP data (fallback if timetable not available)
+    """
+    origin = origin.upper()
+    destination = destination.upper()
+    
+    # Priority 1: Try to load from NRDP timetable parsed data
+    timetable_file = Path(__file__).parent.parent / "data" / "timetable_parsed.json"
+    
+    if timetable_file.exists():
+        try:
+            import json
+            with open(timetable_file, 'r', encoding='utf-8') as f:
+                timetable_data = json.load(f)
+            
+            services = timetable_data.get('services', [])
+            
+            # Find services that match the route
+            # Try exact match first
+            matching_services = [
+                s for s in services 
+                if s.get('origin_location') == origin and s.get('destination_location') == destination
+            ]
+            
+            # If no exact match, try to find services that pass through both stations
+            if not matching_services:
+                # This would require checking intermediate stops, which may not be in the parsed data
+                pass
+            
+            if matching_services:
+                # Filter by date if provided
+                if departure_date:
+                    try:
+                        query_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
+                        matching_services = [
+                            s for s in matching_services
+                            if (not s.get('start_date') or s.get('start_date') <= query_date) and
+                               (not s.get('end_date') or s.get('end_date') >= query_date)
+                        ]
+                    except ValueError:
+                        pass
+                
+                if matching_services:
+                    # Use the first matching service
+                    service = matching_services[0]
+                    
+                    # Build stops list
+                    stops = []
+                    
+                    # Add origin
+                    if service.get('origin_location'):
+                        origin_time = service.get('origin_time')
+                        origin_time_str = None
+                        if origin_time:
+                            if isinstance(origin_time, str):
+                                origin_time_str = origin_time
+                            elif hasattr(origin_time, 'isoformat'):
+                                origin_time_str = origin_time.isoformat()
+                            else:
+                                origin_time_str = str(origin_time)
+                        
+                        stops.append({
+                            "location": service['origin_location'],
+                            "location_name": service.get('origin_location'),
+                            "scheduled_departure": origin_time_str,
+                            "scheduled_arrival": None,
+                            "is_origin": True,
+                            "is_destination": False
+                        })
+                    
+                    # Add intermediate stops (if available in parsed data)
+                    intermediate_stops = service.get('intermediate_stops', [])
+                    if intermediate_stops:
+                        for stop in intermediate_stops:
+                            dep_time = stop.get('departure') or stop.get('dep')
+                            arr_time = stop.get('arrival') or stop.get('arr')
+                            
+                            dep_str = None
+                            if dep_time:
+                                if isinstance(dep_time, str):
+                                    dep_str = dep_time
+                                elif hasattr(dep_time, 'isoformat'):
+                                    dep_str = dep_time.isoformat()
+                                else:
+                                    dep_str = str(dep_time)
+                            
+                            arr_str = None
+                            if arr_time:
+                                if isinstance(arr_time, str):
+                                    arr_str = arr_time
+                                elif hasattr(arr_time, 'isoformat'):
+                                    arr_str = arr_time.isoformat()
+                                else:
+                                    arr_str = str(arr_time)
+                            
+                            stops.append({
+                                "location": stop.get('location', ''),
+                                "location_name": stop.get('location', ''),
+                                "scheduled_departure": dep_str,
+                                "scheduled_arrival": arr_str,
+                                "platform": stop.get('platform', ''),
+                                "is_origin": False,
+                                "is_destination": False
+                            })
+                    
+                    # Add destination
+                    if service.get('destination_location'):
+                        dest_time = service.get('destination_time')
+                        dest_time_str = None
+                        if dest_time:
+                            if isinstance(dest_time, str):
+                                dest_time_str = dest_time
+                            elif hasattr(dest_time, 'isoformat'):
+                                dest_time_str = dest_time.isoformat()
+                            else:
+                                dest_time_str = str(dest_time)
+                        
+                        stops.append({
+                            "location": service['destination_location'],
+                            "location_name": service.get('destination_location'),
+                            "scheduled_departure": None,
+                            "scheduled_arrival": dest_time_str,
+                            "is_origin": False,
+                            "is_destination": True
+                        })
+                    
+                    return {
+                        "route": f"{origin}-{destination}",
+                        "train_uid": service.get('train_uid'),
+                        "stops": stops,
+                        "total_stops": len(stops),
+                        "data_source": "nrdp_timetable",
+                        "valid_from": str(service.get('start_date')) if service.get('start_date') else None,
+                        "valid_to": str(service.get('end_date')) if service.get('end_date') else None,
+                        "note": "Future timetable data" if stops else "Timetable data found but intermediate stops not available"
+                    }
+        except Exception as e:
+            logger.warning(f"Failed to load timetable data: {e}")
+    
+    # Priority 2: Fallback to historical HSP data (for reference, but note it's historical)
+    # This is less ideal but provides some data if timetable is not available
+    query = """
+        SELECT DISTINCT
+            hsd.rid,
+            hsd.location,
+            hsd.location_name,
+            hsd.scheduled_departure,
+            hsd.scheduled_arrival,
+            hsd.toc_code,
+            hsd.toc_name
+        FROM hsp_service_details hsd
+        WHERE hsd.rid IN (
+            SELECT DISTINCT rid
+            FROM hsp_service_details
+            WHERE location = :origin
+        )
+        AND hsd.rid IN (
+            SELECT DISTINCT rid
+            FROM hsp_service_details
+            WHERE location = :destination
+        )
+        ORDER BY hsd.scheduled_departure
+        LIMIT 1
+    """
+    
+    route_rids = db_pool.execute_query(query, {"origin": origin, "destination": destination})
+    
+    if route_rids:
+        rid = route_rids[0]["rid"]
+        
+        stops_query = """
+            SELECT 
+                location,
+                location_name,
+                scheduled_departure,
+                scheduled_arrival,
+                toc_code,
+                toc_name
+            FROM hsp_service_details
+            WHERE rid = :rid
+            ORDER BY scheduled_departure, scheduled_arrival
+        """
+        
+        stops = db_pool.execute_query(stops_query, {"rid": rid})
+        
+        formatted_stops = []
+        for stop in stops:
+            formatted_stops.append({
+                "location": stop.get("location"),
+                "location_name": stop.get("location_name") or stop.get("location"),
+                "scheduled_departure": stop.get("scheduled_departure"),
+                "scheduled_arrival": stop.get("scheduled_arrival"),
+                "toc_code": stop.get("toc_code"),
+                "toc_name": stop.get("toc_name")
+            })
+        
+        return {
+            "route": f"{origin}-{destination}",
+            "rid": rid,
+            "stops": formatted_stops,
+            "total_stops": len(formatted_stops),
+            "data_source": "hsp_historical",
+            "note": "⚠️ Historical data - may not reflect future schedules"
+        }
+    
+    # No data available
+    return {
+        "route": f"{origin}-{destination}",
+        "stops": [],
+        "message": "No timetable data found for this route. Timetable data may need to be updated.",
+        "data_source": None
+    }
+
 @app.post("/api/cache/invalidate")
 async def invalidate_cache_endpoint(
     origin: Optional[str] = None,

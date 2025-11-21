@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RailFair API 测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 { color: #2563eb; }
+        h2 { color: #1e40af; margin-top: 30px; }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .info { background: #dbeafe; color: #1e40af; }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚂 RailFair API 测试页面</h1>
+    
+    <div class="container">
+        <h2>1. 健康检查</h2>
+        <button onclick="testHealth()">测试 /health</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="container">
+        <h2>2. 预测API测试</h2>
+        <div class="form-group">
+            <label>起点站:</label>
+            <input type="text" id="origin" value="EUS" placeholder="例如: EUS">
+        </div>
+        <div class="form-group">
+            <label>终点站:</label>
+            <input type="text" id="destination" value="MAN" placeholder="例如: MAN">
+        </div>
+        <div class="form-group">
+            <label>日期:</label>
+            <input type="date" id="date" value="2025-12-25">
+        </div>
+        <div class="form-group">
+            <label>时间:</label>
+            <input type="time" id="time" value="09:30">
+        </div>
+        <button onclick="testPredict()">测试预测</button>
+        <div id="predict-result"></div>
+    </div>
+
+    <div class="container">
+        <h2>3. 前端页面链接</h2>
+        <p>
+            <a href="frontend/railfair/index.html" target="_blank" style="color: #2563eb; text-decoration: none; font-size: 18px;">
+                → 打开前端页面进行查询
+            </a>
+        </p>
+        <p class="info status">
+            💡 提示：如果前端页面无法加载，请确保使用HTTP服务器打开（例如：python3 -m http.server 3000）
+        </p>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<p class="info status">⏳ 正在测试...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'healthy') {
+                    resultDiv.innerHTML = `
+                        <div class="success status">
+                            ✅ 健康检查通过！<br>
+                            状态: ${data.status}<br>
+                            时间: ${data.timestamp}<br>
+                            服务状态:<br>
+                            - API: ${data.services.api}<br>
+                            - Redis: ${data.services.redis}<br>
+                            - Database: ${data.services.database}<br>
+                            - Fare Engine: ${data.services.fare_engine}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error status">❌ 健康检查失败</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error status">
+                        ❌ 连接失败: ${error.message}<br>
+                        请确保后端API正在运行在 http://localhost:8000
+                    </div>
+                `;
+            }
+        }
+
+        async function testPredict() {
+            const resultDiv = document.getElementById('predict-result');
+            const origin = document.getElementById('origin').value.toUpperCase();
+            const destination = document.getElementById('destination').value.toUpperCase();
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            
+            resultDiv.innerHTML = '<p class="info status">⏳ 正在查询预测...</p>';
+            
+            try {
+                const [datePart, timePart] = [date, time];
+                
+                const response = await fetch(`${API_BASE}/api/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origin,
+                        destination,
+                        departure_date: datePart,
+                        departure_time: timePart,
+                        include_fares: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const pred = data.prediction || data.data?.prediction;
+                    const fares = data.fares || data.data?.fares;
+                    
+                    let html = '<div class="success status">✅ 预测成功！</div>';
+                    
+                    if (pred) {
+                        html += `
+                            <h3>预测结果:</h3>
+                            <ul>
+                                <li>预测延迟: ${pred.predicted_delay_minutes || pred.expected_delay_minutes || 'N/A'} 分钟</li>
+                                <li>置信度: ${pred.confidence || 'N/A'}</li>
+                                <li>准点概率: ${((pred.on_time_probability || 0) * 100).toFixed(1)}%</li>
+                                <li>数据点: ${pred.historical_data_points || pred.sample_size || 'N/A'}</li>
+                            </ul>
+                        `;
+                    }
+                    
+                    if (fares) {
+                        html += `
+                            <h3>票价信息:</h3>
+                            <ul>
+                                <li>Advance: ${fares.advance !== null && fares.advance !== undefined ? '£' + fares.advance.toFixed(2) : '不可用'}</li>
+                                <li>Off-Peak: ${fares.off_peak !== null && fares.off_peak !== undefined ? '£' + fares.off_peak.toFixed(2) : '不可用'}</li>
+                                <li>Anytime: ${fares.anytime !== null && fares.anytime !== undefined ? '£' + fares.anytime.toFixed(2) : '不可用'}</li>
+                            </ul>
+                        `;
+                    }
+                    
+                    html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error status">❌ 预测失败: ${data.detail || 'Unknown error'}</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error status">
+                        ❌ 请求失败: ${error.message}<br>
+                        请检查浏览器控制台查看详细错误
+                    </div>
+                `;
+                console.error('Prediction error:', error);
+            }
+        }
+
+        // 页面加载时自动测试健康检查
+        window.addEventListener('DOMContentLoaded', () => {
+            testHealth();
+        });
+    </script>
+</body>
+</html>
+

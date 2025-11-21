@@ -185,7 +185,7 @@ function formatDurationLabel(minutes) {
 
 function formatCurrency(value) {
     if (value === null || value === undefined || Number.isNaN(Number(value))) {
-        return 'Unavailable';
+        return '-';
     }
     return `£${Number(value).toFixed(2)}`;
 }
@@ -252,7 +252,10 @@ searchForm.addEventListener('submit', async (e) => {
 
         resultsContainer.classList.remove('hidden');
 
-        // Update Header
+        // Update Header (only if this is the first result, or clear previous results)
+        // Option: Clear previous results on new search
+        resultsList.innerHTML = '';  // Clear previous results for new search
+        
         document.getElementById('route-title').innerHTML = `${origin} <span class="text-slate-400 px-2">→</span> ${destination}`;
         document.getElementById('route-date').textContent = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -271,6 +274,7 @@ searchForm.addEventListener('submit', async (e) => {
 
 function renderResults(data) {
     if (!data || !data.prediction) {
+        // Clear previous results if error
         resultsList.innerHTML = `
             <div class="bg-white border border-slate-200 rounded-xl p-5 text-slate-600">
                 无法获取预测结果，请稍后重试。
@@ -278,6 +282,9 @@ function renderResults(data) {
         `;
         return;
     }
+    
+    // Don't clear previous results - allow multiple queries
+    // resultsList.innerHTML = ''; // Uncomment if you want to clear previous results
 
     const prediction = data.prediction;
     const fares = data.fares || null;
@@ -350,7 +357,7 @@ function renderResults(data) {
         : null;
     const cheapestSummary = hasCheapestPrice
         ? `${(cheapestTypeLabel || 'Cheapest').toUpperCase()} • ${cheapestPriceLabel}`
-        : 'Cheapest fare unavailable';
+        : 'Cheapest fare: -';
 
     const hasSavingsAmount = fares?.cheapest
         && fares.cheapest.savings_amount !== null
@@ -359,7 +366,7 @@ function renderResults(data) {
         ? `Save ${formatCurrency(fares.cheapest.savings_amount)}${typeof fares.cheapest.savings_percentage === 'number'
             ? ` (${fares.cheapest.savings_percentage.toFixed(1)}%)`
             : ''}`
-        : 'Savings data unavailable';
+        : 'Savings: -';
 
     const fareFootnote = fares
         ? `Source: ${fares.meta?.data_source || 'NRDP'}${fares.meta?.cache_age_hours ? ` • Cached ${fares.meta.cache_age_hours}h ago` : ''}`
@@ -378,8 +385,12 @@ function renderResults(data) {
         ].filter(Boolean).join(' • ')}`
         : '';
 
+    const originCode = document.getElementById('origin').value.toUpperCase();
+    const destCode = document.getElementById('destination').value.toUpperCase();
+    const resultId = `result-${Date.now()}`;
+
     const html = `
-        <div class="bg-white border border-slate-200 rounded-xl p-5 transition-all hover:border-blue-400 hover:shadow-md animate-fade-in">
+        <div id="${resultId}" class="bg-white border border-slate-200 rounded-xl p-5 transition-all hover:border-blue-400 hover:shadow-md animate-fade-in">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 
                 <!-- Timetable -->
@@ -392,7 +403,7 @@ function renderResults(data) {
                             <span>${scheduledArrivalLabel}</span>
                         </div>
                         <p class="text-xs text-slate-500 mt-1">
-                            ${durationLabel ? `Duration ${durationLabel}` : 'Duration unavailable'}
+                            ${durationLabel ? `Duration ${durationLabel}` : 'Duration: -'}
                             ${timetable?.service_frequency ? ` • ${timetable.service_frequency}` : ''}
                         </p>
                     </div>
@@ -407,6 +418,10 @@ function renderResults(data) {
                             <span>Confidence ${confidenceLabel}</span>
                         </div>
                     </div>
+                    <button id="${resultId}-toggle" class="mt-2 text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                        <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                        <span>查看中间站台</span>
+                    </button>
                 </div>
 
                 <!-- Probability -->
@@ -453,11 +468,108 @@ function renderResults(data) {
                 </div>
 
             </div>
+            <div id="${resultId}-stops" class="hidden mt-4 pt-4 border-t border-slate-200">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                    <span class="text-sm font-semibold text-slate-700">中间站台</span>
+                </div>
+                <div id="${resultId}-stops-content" class="text-sm text-slate-600">
+                    <div class="flex items-center justify-center py-4">
+                        <div class="w-5 h-5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                        <span class="ml-2 text-slate-500">加载中...</span>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 
-    resultsList.innerHTML = html;
+    // Append instead of replace to allow multiple results
+    const resultDiv = document.createElement('div');
+    resultDiv.innerHTML = html;
+    resultsList.appendChild(resultDiv);
+    
+    // Re-initialize lucide icons for the new content
     lucide.createIcons();
+
+    // Add click handler for stops toggle - use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+        const toggleBtn = document.getElementById(`${resultId}-toggle`);
+        const stopsDiv = document.getElementById(`${resultId}-stops`);
+        const stopsContent = document.getElementById(`${resultId}-stops-content`);
+        
+        if (!toggleBtn || !stopsDiv || !stopsContent) {
+            console.error('Failed to find toggle elements:', { toggleBtn, stopsDiv, stopsContent });
+            return;
+        }
+        
+        let stopsLoaded = false;
+
+        toggleBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (stopsDiv.classList.contains('hidden')) {
+                stopsDiv.classList.remove('hidden');
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'chevron-up');
+                }
+                
+                if (!stopsLoaded) {
+                    try {
+                        const response = await fetch(`${API_URL}/routes/${originCode}/${destCode}/stops`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        const stopsData = await response.json();
+                        
+                        if (stopsData.stops && stopsData.stops.length > 0) {
+                            let stopsHtml = '<div class="space-y-2">';
+                            stopsData.stops.forEach((stop, index) => {
+                                const depTime = stop.scheduled_departure 
+                                    ? formatTimeLabel(stop.scheduled_departure) 
+                                    : '-';
+                                const arrTime = stop.scheduled_arrival 
+                                    ? formatTimeLabel(stop.scheduled_arrival) 
+                                    : '-';
+                                const timeDisplay = depTime !== '-' ? depTime : (arrTime !== '-' ? arrTime : '-');
+                                
+                                const isOrigin = stop.is_origin === true || index === 0;
+                                const isDest = stop.is_destination === true || index === stopsData.stops.length - 1;
+                                
+                                stopsHtml += `
+                                    <div class="flex items-center gap-3 py-2 px-3 rounded-lg ${isOrigin || isDest ? 'bg-blue-50' : 'bg-slate-50'}">
+                                        <div class="flex-shrink-0 w-16 text-xs font-mono text-slate-500">${timeDisplay}</div>
+                                        <div class="flex-1">
+                                            <div class="font-medium text-slate-900">${stop.location_name || stop.location}</div>
+                                            <div class="text-xs text-slate-500">${stop.location}</div>
+                                        </div>
+                                        ${index < stopsData.stops.length - 1 ? '<i data-lucide="arrow-down" class="w-4 h-4 text-slate-300 flex-shrink-0"></i>' : ''}
+                                    </div>
+                                `;
+                            });
+                            stopsHtml += '</div>';
+                            stopsContent.innerHTML = stopsHtml;
+                        } else {
+                            stopsContent.innerHTML = '<p class="text-slate-500 text-center py-4">暂无中间站台数据</p>';
+                        }
+                        stopsLoaded = true;
+                    } catch (error) {
+                        console.error('Failed to load stops:', error);
+                        stopsContent.innerHTML = `<p class="text-red-500 text-center py-4">加载失败: ${error.message}</p>`;
+                    }
+                    lucide.createIcons();
+                }
+            } else {
+                stopsDiv.classList.add('hidden');
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'chevron-down');
+                }
+            }
+            lucide.createIcons();
+        });
+    }, 100);
 }
 
 // --- Initialization ---
