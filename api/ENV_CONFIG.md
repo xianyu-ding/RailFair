@@ -40,7 +40,7 @@ HSP_PASSWORD=your_password_here
 
 ```bash
 # 在 .env 文件中添加（可选）
-HSP_EMAIL=vanessading00@gmail.com
+HSP_EMAIL=your_email@example.com
 ```
 
 但这不是必需的，因为代码会优先使用 `HSP_USERNAME`。
