@@ -1,13 +1,7 @@
 // Configuration
-const apiBaseOverride =
-    window.__RAILFAIR_API_BASE__ ||
-    (document.documentElement && document.documentElement.dataset
-        ? document.documentElement.dataset.apiBase
-        : null);
-
-// 优先使用配置的 API base，否则使用硬编码的后端地址
-// 不要使用 window.location.origin，因为前端域名和后端域名不同
-const API_BASE = (apiBaseOverride || 'https://api.railfair.uk').replace(/\/+$/, '');
+// 直接硬编码后端 API 地址，确保不会使用错误的前端域名
+// 后端 API 域名是 https://api.railfair.uk
+const API_BASE = 'https://api.railfair.uk';
 const API_URL = API_BASE;  // API_URL 直接使用 API_BASE，因为后端路径是 /api/predict
 const CANVAS_ID = 'rain-canvas';
 
