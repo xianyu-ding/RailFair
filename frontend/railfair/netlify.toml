@@ -11,7 +11,11 @@
   to = "https://api.railfair.uk/api/:splat"
   status = 200
   force = true
-  headers = { X-From = "Netlify" }
+  # 添加必要的请求头以通过 Cloudflare 保护
+  headers = { 
+    X-From = "Netlify",
+    User-Agent = "Mozilla/5.0 (compatible; Netlify/1.0)"
+  }
 
 # 确保 CORS 头正确设置
 [[headers]]
