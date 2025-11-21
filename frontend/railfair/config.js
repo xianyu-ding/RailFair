@@ -20,10 +20,8 @@
     // 如果使用 Netlify 代理（推荐），可以留空（使用相对路径）
     // 如果直接调用，设置为: 'https://api.railfair.uk' 或你的 Cloudflare Workers 地址
     // 本地开发时，设置为: 'http://localhost:8000'
-    // 生产环境：留空使用 Netlify 代理，或设置为实际的后端地址
-    // 如果 Netlify 代理有问题，可以临时使用直接调用：
-    // const configuredBase = 'https://api.railfair.uk';
-    const configuredBase = '';  // 生产环境：使用 Netlify 代理
+    // 生产环境：直接调用后端（绕过 Netlify 代理以避免 Cloudflare 403 错误）
+    const configuredBase = 'https://api.railfair.uk';  // 直接调用后端
 
     if (configuredBase) {
         window.__RAILFAIR_API_BASE__ = configuredBase;
