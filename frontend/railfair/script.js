@@ -1,8 +1,10 @@
 // Configuration
 // 直接硬编码后端 API 地址，确保不会使用错误的前端域名
 // 后端 API 域名是 https://api.railfair.uk
+// 强制设置为 api.railfair.uk，忽略任何其他配置
 const API_BASE = 'https://api.railfair.uk';
-const API_URL = API_BASE;  // API_URL 直接使用 API_BASE，因为后端路径是 /api/predict
+const API_URL = 'https://api.railfair.uk';  // 直接硬编码，不使用任何变量
+console.log('🔧 API Configuration:', { API_BASE, API_URL });
 const CANVAS_ID = 'rain-canvas';
 
 // State
