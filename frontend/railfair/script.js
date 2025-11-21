@@ -238,7 +238,16 @@ searchForm.addEventListener('submit', async (e) => {
             })
         });
 
-        if (!response.ok) throw new Error('API Request Failed');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url,
+                body: errorText
+            });
+            throw new Error(`API Request Failed: ${response.status} ${response.statusText}`);
+        }
         const data = await response.json();
 
         // Transition to results view
@@ -263,8 +272,17 @@ searchForm.addEventListener('submit', async (e) => {
         renderResults(payload);
 
     } catch (error) {
-        console.error(error);
-        alert('Search failed. Please ensure the backend is running.');
+        console.error('Search error:', error);
+        console.error('API_URL:', API_URL);
+        console.error('API_BASE:', API_BASE);
+        
+        // Show more detailed error message
+        let errorMessage = 'Search failed. ';
+        if (error.message) {
+            errorMessage += `Error: ${error.message}. `;
+        }
+        errorMessage += 'Please check the browser console for details.';
+        alert(errorMessage);
     } finally {
         searchBtn.innerHTML = '<i data-lucide="search" class="w-5 h-5"></i>';
         searchBtn.disabled = false;

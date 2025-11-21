@@ -13,3 +13,11 @@
   force = true
   headers = { X-From = "Netlify" }
 
+# 确保 CORS 头正确设置
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
