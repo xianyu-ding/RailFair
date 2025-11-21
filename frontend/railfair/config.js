@@ -16,8 +16,9 @@
         return;
     }
 
-    // ⚠️ 重要：请将下面的地址替换为你的 Cloudflare 后端地址
-    // 例如: 'https://railfair-api.your-domain.com' 或 'https://railfair-backend.workers.dev'
+    // Cloudflare Workers 后端地址
+    // 如果使用 Netlify 代理，可以留空（使用相对路径）
+    // 如果直接调用，设置为: 'https://api.railfair.uk'
     const configuredBase = '';
 
     if (configuredBase) {
