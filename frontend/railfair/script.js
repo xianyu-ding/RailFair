@@ -5,8 +5,10 @@ const apiBaseOverride =
         ? document.documentElement.dataset.apiBase
         : null);
 
-const API_BASE = (apiBaseOverride || window.location.origin || '').replace(/\/+$/, '');
-const API_URL = `${API_BASE}/api`;
+// 优先使用配置的 API base，否则使用硬编码的后端地址
+// 不要使用 window.location.origin，因为前端域名和后端域名不同
+const API_BASE = (apiBaseOverride || 'https://api.railfair.uk').replace(/\/+$/, '');
+const API_URL = API_BASE;  // API_URL 直接使用 API_BASE，因为后端路径是 /api/predict
 const CANVAS_ID = 'rain-canvas';
 
 // State
@@ -226,7 +228,7 @@ searchForm.addEventListener('submit', async (e) => {
     try {
         const [date, time] = datetime.split('T');
 
-        const response = await fetch(`${API_URL}/predict`, {
+        const response = await fetch(`${API_URL}/api/predict`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -535,7 +537,7 @@ function renderResults(data) {
                 
                 if (!stopsLoaded) {
                     try {
-                        const response = await fetch(`${API_URL}/routes/${originCode}/${destCode}/stops`);
+                        const response = await fetch(`${API_URL}/api/routes/${originCode}/${destCode}/stops`);
                         if (!response.ok) {
                             throw new Error(`HTTP ${response.status}`);
                         }
