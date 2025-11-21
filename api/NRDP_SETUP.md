@@ -90,8 +90,8 @@ grep -E "NRDP" .env
 
 应该看到：
 ```
-NRDP_EMAIL=vanessading00@gmail.com
-NRDP_PASSWORD=T8vBy2kL!cvJrcS
+NRDP_EMAIL=your_email@example.com
+NRDP_PASSWORD=your_password_here
 ```
 
 ## 📝 重要注意事项

@@ -27,11 +27,11 @@ API用户名密码是用于**数据收集脚本**的，不是用于预测的：
 
 ## 📝 .env 文件配置检查
 
-你的 `.env` 文件配置看起来是正确的：
+你的 `.env` 文件配置示例：
 
 ```bash
-HSP_USERNAME=vanessading00@gmail.com
-HSP_PASSWORD=T8vBy2kL!cvJrcS
+HSP_USERNAME=your_email@example.com
+HSP_PASSWORD=your_password_here
 ```
 
 ### 可选：添加 HSP_EMAIL
