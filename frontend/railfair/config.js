@@ -23,8 +23,12 @@
     // 生产环境：直接调用后端（绕过 Netlify 代理以避免 Cloudflare 403 错误）
     const configuredBase = 'https://api.railfair.uk';  // 直接调用后端
 
+    // 强制设置 API base，确保覆盖任何默认值
     if (configuredBase) {
         window.__RAILFAIR_API_BASE__ = configuredBase;
+        console.log('✅ API Base configured:', configuredBase);
+    } else {
+        console.warn('⚠️ API Base not configured, using default:', window.location.origin);
     }
 })();
 
