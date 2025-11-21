@@ -6,7 +6,8 @@ const apiBaseOverride =
         : null);
 
 const API_BASE = (apiBaseOverride || window.location.origin || '').replace(/\/+$/, '');
-const API_URL = `${API_BASE}/api`;
+// 直接使用后端 API 地址，避免 Netlify 代理问题
+const API_URL = apiBaseOverride ? `${apiBaseOverride}/api` : 'https://api.railfair.uk';
 const CANVAS_ID = 'rain-canvas';
 
 // State
