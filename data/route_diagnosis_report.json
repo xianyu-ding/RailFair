@@ -1,0 +1,81 @@
+{
+  "generated_at": "2025-11-16T21:27:54.813608",
+  "route_status": {
+    "EUS-MAN": "OK",
+    "KGX-EDB": "OK",
+    "PAD-BRI": "OK",
+    "LST-NRW": "OK",
+    "MYB-BHM": "NO_DATA",
+    "MAN-LIV": "LOW_DATA",
+    "BHM-MAN": "LOW_DATA",
+    "BRI-BHM": "LOW_DATA",
+    "EDB-GLC": "OK",
+    "MAN-LDS": "LOW_DATA"
+  },
+  "no_data_routes": [
+    "MYB-BHM"
+  ],
+  "low_data_routes": [
+    "MAN-LIV",
+    "BHM-MAN",
+    "BRI-BHM",
+    "MAN-LDS"
+  ],
+  "alternative_routes": [
+    {
+      "from": "EUS",
+      "to": "MAN",
+      "count": 547
+    },
+    {
+      "from": "MYB",
+      "to": "OXF",
+      "count": 305
+    },
+    {
+      "from": "EUS",
+      "to": "BHM",
+      "count": 268
+    },
+    {
+      "from": "PAD",
+      "to": "BRI",
+      "count": 267
+    },
+    {
+      "from": "NCL",
+      "to": "LIV",
+      "count": 234
+    },
+    {
+      "from": "KGX",
+      "to": "EDB",
+      "count": 211
+    },
+    {
+      "from": "LIV",
+      "to": "NCL",
+      "count": 211
+    },
+    {
+      "from": "MCV",
+      "to": "LDS",
+      "count": 161
+    },
+    {
+      "from": "MYB",
+      "to": "BMO",
+      "count": 148
+    },
+    {
+      "from": "EDB",
+      "to": "GLC",
+      "count": 111
+    },
+    {
+      "from": "PAD",
+      "to": "WSM",
+      "count": 104
+    }
+  ]
+}

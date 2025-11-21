@@ -1,0 +1,9 @@
+{
+  "routes_processed": 4,
+  "routes_failed": 2,
+  "total_api_calls": 2,
+  "total_records": 61,
+  "total_time": 182.692312002182,
+  "start_time": "2025-11-14T14:34:57.654419",
+  "end_time": "2025-11-14T14:44:10.258674"
+}

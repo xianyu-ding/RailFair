@@ -1,0 +1,13 @@
+{
+  "started_at": null,
+  "last_updated": "2025-11-14T14:44:10.257364",
+  "completed_routes": [
+    "MYB-BMO",
+    "MYB-OXF",
+    "MAN-NCL",
+    "MAN-SHF"
+  ],
+  "failed_routes": [],
+  "total_records": 45,
+  "phase": "TEST_NEW_ROUTES"
+}

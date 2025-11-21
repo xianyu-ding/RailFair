@@ -1,0 +1,46 @@
+======================================================================
+DATA VALIDATION REPORT
+Generated: 2025-11-13 23:59:19
+======================================================================
+
+📊 SUMMARY
+----------------------------------------
+Total Records: 72,339
+Unique Routes: 60
+Unique Services: 8,643
+Date Range: 2024-10-01 to 2025-10-31
+TOCs: 10
+Locations: 237
+
+📈 QUALITY SCORE
+----------------------------------------
+Overall Quality Score: 82/100
+Critical Errors: 1
+Warnings: 4
+
+❌ CRITICAL ERRORS
+----------------------------------------
+• Missing routes: MYB-BHM, EDB-GLC, MAN-LDS
+
+⚠️  WARNINGS
+----------------------------------------
+• Delay calculation inconsistency: 1 records
+• Extreme delays detected: 540 records
+• Low data routes: LST-NRW, MAN-LIV, BHM-MAN, BRI-BHM
+• Missing data for 257 days
+
+💡 RECOMMENDATIONS
+----------------------------------------
+1. ❌ Address critical errors before proceeding with modeling
+2. ⚠️ Review and address data quality warnings
+3. 📊 Consider collecting weekend data for better coverage
+4. 🔄 Implement incremental data updates for freshness
+5. 📝 Add metadata collection for TOC and station information
+
+✅ WEEK 1 SUCCESS CRITERIA
+----------------------------------------
+✅ Data volume: ≥10,000 records
+✅ Route coverage: ≥10 routes
+✅ Quality validation: 82/100 ≥ 70
+
+📊 Success Rate: 3/3 (100%)

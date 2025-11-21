@@ -1,0 +1,158 @@
+{
+  "summary": {
+    "metrics_records": 1145,
+    "details_records": 58394,
+    "unique_routes": 50,
+    "unique_services": 7151,
+    "date_range": {
+      "start": "2024-10-01",
+      "end": "2025-10-31"
+    },
+    "toc_count": 8,
+    "location_count": 218
+  },
+  "quality_checks": {
+    "completeness": {
+      "scheduled_departure": {
+        "non_null": 50880,
+        "total": 58394,
+        "percentage": 87.13
+      },
+      "scheduled_arrival": {
+        "non_null": 49888,
+        "total": 58394,
+        "percentage": 85.43
+      },
+      "actual_departure": {
+        "non_null": 48242,
+        "total": 58394,
+        "percentage": 82.61
+      },
+      "actual_arrival": {
+        "non_null": 47265,
+        "total": 58394,
+        "percentage": 80.94
+      },
+      "departure_delay_minutes": {
+        "non_null": 48235,
+        "total": 58394,
+        "percentage": 82.6
+      },
+      "arrival_delay_minutes": {
+        "non_null": 47265,
+        "total": 58394,
+        "percentage": 80.94
+      }
+    },
+    "consistency": {
+      "time_sequence_errors": 39073,
+      "delay_calculation_errors": 0
+    },
+    "delay_quality": {
+      "total_records": 47265,
+      "mean_delay": 4.05,
+      "median_delay": 2,
+      "on_time_rate": 34.11,
+      "distribution": {
+        "on_time": 16123,
+        "slightly_late": 14370,
+        "late": 8610,
+        "very_late": 6870,
+        "early": 1292
+      }
+    },
+    "route_coverage": {
+      "EUS-MAN": 428,
+      "KGX-EDR": 0,
+      "PAD-BRI": 170,
+      "LST-NRW": 89,
+      "VIC-BHM": 0,
+      "MAN-LIV": 0,
+      "BHM-MAN": 21,
+      "BRI-BHM": 6,
+      "EDR-GLC": 0,
+      "MAN-LEE": 0
+    },
+    "temporal_distribution": {
+      "total_days": 129,
+      "missing_days": 267,
+      "avg_daily_records": 453.0,
+      "weekday_distribution": {
+        "Monday": 28656,
+        "Tuesday": 2718,
+        "Wednesday": 1606,
+        "Thursday": 1825,
+        "Friday": 2718,
+        "Saturday": 12194,
+        "Sunday": 8677
+      }
+    },
+    "toc_analysis": {
+      "VT": {
+        "services": 15955,
+        "avg_delay": 4.5,
+        "on_time_rate": 17.55
+      },
+      "GW": {
+        "services": 12599,
+        "avg_delay": 5.13,
+        "on_time_rate": 36.92
+      },
+      "XC": {
+        "services": 9851,
+        "avg_delay": 4.67,
+        "on_time_rate": 40.89
+      },
+      "LE": {
+        "services": 8012,
+        "avg_delay": 0.68,
+        "on_time_rate": 70.83
+      },
+      "NT": {
+        "services": 352,
+        "avg_delay": 4.5,
+        "on_time_rate": 23.58
+      },
+      "TP": {
+        "services": 236,
+        "avg_delay": 3.54,
+        "on_time_rate": 39.83
+      },
+      "EM": {
+        "services": 218,
+        "avg_delay": 4.67,
+        "on_time_rate": 28.44
+      },
+      "AW": {
+        "services": 42,
+        "avg_delay": 0.9,
+        "on_time_rate": 52.38
+      }
+    },
+    "anomalies": [
+      "Extreme delays: 93"
+    ],
+    "freshness": {
+      "latest_fetch": "2025-11-13T13:57:40.933267",
+      "earliest_fetch": "2025-11-12 17:06:50.624772",
+      "age_hours": 1.3,
+      "collection_span_hours": 20.8
+    }
+  },
+  "warnings": [
+    "Extreme delays detected: 482 records",
+    "Low data routes: LST-NRW, BHM-MAN, BRI-BHM",
+    "Missing data for 267 days"
+  ],
+  "errors": [
+    "Time inconsistency: 39073 records",
+    "Missing routes: KGX-EDR, VIC-BHM, MAN-LIV, EDR-GLC, MAN-LEE"
+  ],
+  "recommendations": [
+    "\u274c Address critical errors before proceeding with modeling",
+    "\ud83d\udcca Consider collecting weekend data for better coverage",
+    "\ud83d\udd04 Implement incremental data updates for freshness",
+    "\ud83d\udcdd Add metadata collection for TOC and station information",
+    "\ud83c\udfaf Focus on high-traffic routes for initial predictions"
+  ]
+}

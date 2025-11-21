@@ -1,0 +1,75 @@
+# HSP Data Collection Configuration - Test EUS-BHM and MCV-LDS (Single Day)
+# Purpose: Test if EUS-BHM and MCV-LDS have data with minimal date range
+# Date Range: 2024-12-01 (Single day only)
+# Routes: EUS-BHM, MCV-LDS only
+
+api:
+  base_url: "https://hsp-prod.rockshore.net/api/v1"
+  timeout: 300  # Increased timeout
+  request_interval:
+    min: 3.0  # Further increase delay to reduce 502 errors
+    max: 8.0
+  
+auth:
+  # Credentials should be set via environment variables:
+  # HSP_EMAIL or HSP_USERNAME
+  # HSP_PASSWORD
+  username: ""  # Fallback if env vars not set
+  password: ""  # Fallback if env vars not set
+
+data_collection:
+  # Test: Single day only to minimize data volume
+  from_date: "2024-12-01"
+  to_date: "2024-12-01"  # Same day = single day test
+  days: "WEEKDAY"  # WEEKDAY only
+  from_time: "0600"  # Standard time window
+  to_time: "2200"
+  
+  # Pagination settings
+  num_services: 500  # Records per API call
+  
+  # Rate limiting (further increased)
+  delay_between_requests: 5.0  # Seconds between API calls
+  delay_between_routes: 15.0   # Seconds between different routes
+
+retry:
+  max_attempts: 5  # Increase retry attempts for 502 errors
+  initial_delay: 2.0
+  max_delay: 60.0  # Increase max delay
+  backoff_multiplier: 2
+  jitter: true
+
+# Test Routes: Only the two routes that failed
+routes:
+  - name: "EUS-BHM"
+    description: "London Euston - Birmingham New Street (replaces MYB-BHM)"
+    from_loc: "EUS"
+    to_loc: "BHM"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 1
+    
+  - name: "MCV-LDS"
+    description: "Manchester Victoria - Leeds (replaces MAN-LDS)"
+    from_loc: "MCV"
+    to_loc: "LDS"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 3
+
+database:
+  path: "data/railfair.db"
+  batch_size: 100  # Commit every N records
+  
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/hsp_test_routes_single_day.log"
+  console: true
+
+output:
+  save_raw_json: true
+  raw_data_dir: "data/raw/hsp/test_routes_single_day"
+  progress_file: "data/progress_test_routes_single_day.json"
+  statistics_file: "data/stats_test_routes_single_day.json"
+

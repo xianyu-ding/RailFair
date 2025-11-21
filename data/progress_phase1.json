@@ -1,0 +1,149 @@
+{
+  "started_at": "2025-11-12T16:14:22.897486",
+  "last_updated": "2025-11-15T01:40:23.272681",
+  "completed_routes": [
+    "EUS-MAN",
+    "PAD-BRI",
+    "LST-NRW",
+    "KGX-EDR",
+    "VIC-BHM",
+    "MAN-LIV",
+    "BHM-MAN",
+    "BRI-BHM",
+    "EDR-GLC",
+    "MAN-LEE",
+    "KGX-EDB",
+    "MYB-BHM",
+    "EDB-GLC",
+    "MAN-LDS",
+    "EUS-BHM",
+    "MCV-LIV",
+    "MYB-OXF",
+    "MYB-BMO",
+    "MCV-LDS"
+  ],
+  "failed_routes": [
+    {
+      "route": "EUS-MAN",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:16:38.793032"
+    },
+    {
+      "route": "KGX-EDR",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:16:43.323387"
+    },
+    {
+      "route": "PAD-BRI",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:16:46.719685"
+    },
+    {
+      "route": "LST-NRW",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:16:50.820311"
+    },
+    {
+      "route": "VIC-BHM",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:16:54.745049"
+    },
+    {
+      "route": "MAN-LIV",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:16:57.814034"
+    },
+    {
+      "route": "BHM-MAN",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:17:00.651517"
+    },
+    {
+      "route": "BRI-BHM",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:17:05.130951"
+    },
+    {
+      "route": "EDR-GLC",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:17:07.603916"
+    },
+    {
+      "route": "MAN-LEE",
+      "error": "API returned status 400: {\"my_journey_errors\":{\"errors\":[\"The day type is invalid\"]}}",
+      "timestamp": "2025-11-12T16:17:10.898980"
+    },
+    {
+      "route": "EUS-MAN",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:21:02.411355"
+    },
+    {
+      "route": "EUS-MAN",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:21:55.158203"
+    },
+    {
+      "route": "KGX-EDR",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:22:25.250541"
+    },
+    {
+      "route": "PAD-BRI",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:22:55.347433"
+    },
+    {
+      "route": "LST-NRW",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:23:25.447181"
+    },
+    {
+      "route": "VIC-BHM",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:23:55.565949"
+    },
+    {
+      "route": "MAN-LIV",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:24:25.717484"
+    },
+    {
+      "route": "BHM-MAN",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:24:55.885167"
+    },
+    {
+      "route": "BRI-BHM",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:25:26.027306"
+    },
+    {
+      "route": "EDR-GLC",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:25:56.119957"
+    },
+    {
+      "route": "MAN-LEE",
+      "error": "HTTPSConnectionPool(host='hsp-prod.rockshore.net', port=443): Read timed out. (read timeout=30)",
+      "timestamp": "2025-11-12T16:26:26.251838"
+    },
+    {
+      "route": "EUS-MAN",
+      "error": "API returned status 502: <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>502 Proxy Error</title>\n</head><body>\n<h1>Proxy Error</h1>\n<p>The proxy server received an invalid\r\nresponse from an upstream server.<br />\r\nThe proxy server could not handle the request <em><a href=\"/api/v1/serviceMetrics\">POST&nbsp;/api/v1/serviceMetrics</a></em>.<p>\nReason: <strong>Error reading from remote server</strong></p></p>\n<hr>\n<address>Apache/2.2.15 (CentOS) Server at hsp-prod.rockshore.net Port 443</address>\n</body></html>\n",
+      "timestamp": "2025-11-12T16:42:17.650957"
+    },
+    {
+      "route": "KGX-EDR",
+      "error": "API returned status 502: <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>502 Proxy Error</title>\n</head><body>\n<h1>Proxy Error</h1>\n<p>The proxy server received an invalid\r\nresponse from an upstream server.<br />\r\nThe proxy server could not handle the request <em><a href=\"/api/v1/serviceMetrics\">POST&nbsp;/api/v1/serviceMetrics</a></em>.<p>\nReason: <strong>Error reading from remote server</strong></p></p>\n<hr>\n<address>Apache/2.2.15 (CentOS) Server at hsp-prod.rockshore.net Port 443</address>\n</body></html>\n",
+      "timestamp": "2025-11-12T16:45:21.797442"
+    },
+    {
+      "route": "PAD-BRI",
+      "error": "API returned status 502: <!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>502 Proxy Error</title>\n</head><body>\n<h1>Proxy Error</h1>\n<p>The proxy server received an invalid\r\nresponse from an upstream server.<br />\r\nThe proxy server could not handle the request <em><a href=\"/api/v1/serviceMetrics\">POST&nbsp;/api/v1/serviceMetrics</a></em>.<p>\nReason: <strong>Error reading from remote server</strong></p></p>\n<hr>\n<address>Apache/2.2.15 (CentOS) Server at hsp-prod.rockshore.net Port 443</address>\n</body></html>\n",
+      "timestamp": "2025-11-12T16:48:25.095677"
+    }
+  ],
+  "total_records": 646,
+  "phase": "PHASE1"
+}

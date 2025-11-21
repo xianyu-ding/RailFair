@@ -1,0 +1,77 @@
+# HSP Data Collection Configuration - Test Mode
+# Purpose: Quick test of batch collection with small date range
+# Date Range: 7 days (to test date chunking)
+# Routes: 1-2 routes for quick validation
+
+api:
+  base_url: "https://hsp-prod.rockshore.net/api/v1"
+  timeout: 180  # Increased timeout for safety
+  
+auth:
+  # Credentials should be set via environment variables:
+  # HSP_EMAIL or HSP_USERNAME
+  # HSP_PASSWORD
+  username: ""  # Fallback if env vars not set
+  password: ""  # Fallback if env vars not set
+
+data_collection:
+  # Test: 7 days to verify date chunking (should create 1 chunk)
+  from_date: "2024-10-01"
+  to_date: "2024-10-07"
+  days: "WEEKDAY"  # Start with WEEKDAY only for faster testing
+  from_time: "0700"  # Morning rush hour
+  to_time: "0900"
+  
+  # Rate limiting (3-5 seconds handled by code)
+  delay_between_requests: 3.0
+  delay_between_routes: 5.0
+
+retry:
+  max_attempts: 3
+  initial_delay: 1.0
+  max_delay: 30.0
+  backoff_multiplier: 2
+  jitter: true
+
+# Test routes (1-2 routes for quick validation)
+routes:
+  - name: "EUS-MAN"
+    description: "London Euston - Manchester Piccadilly (Test)"
+    from_loc: "EUS"
+    to_loc: "MAN"
+    from_time: "0700"
+    to_time: "0900"
+    priority: 1
+
+# Database
+database:
+  path: "data/railfair_test.db"
+
+# Output
+output:
+  progress_file: "data/progress_test.json"
+  stats_file: "data/stats_test.json"
+
+# Timezone configuration
+timezone:
+  api_timezone: "Europe/London"
+  database_timezone: "UTC"
+
+# Validation
+validation:
+  required_fields:
+    service_metrics:
+      - "origin_location"
+      - "destination_location"
+      - "toc_code"
+    service_details:
+      - "rid"
+      - "date_of_service"
+      - "toc_code"
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/test_batch.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+

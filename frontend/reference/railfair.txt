@@ -1,0 +1,601 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Train, 
+  Calendar, 
+  MapPin, 
+  Search, 
+  ArrowRight, 
+  ChevronRight, 
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
+  Bot,
+  Loader2
+} from 'lucide-react';
+
+// --- Configuration ---
+const apiKey = ""; // injected by environment
+
+// --- Mock Data Constants ---
+
+const UK_STATIONS = [
+  "London Kings Cross (KGX)", "London Euston (EUS)", "London Paddington (PAD)", 
+  "Manchester Piccadilly (MAN)", "Birmingham New Street (BHM)", "Edinburgh Waverley (EDB)",
+  "Glasgow Central (GLC)", "Leeds (LDS)", "Bristol Temple Meads (BRI)",
+  "Liverpool Lime Street (LIV)", "Newcastle (NCL)", "York (YRK)",
+  "Cardiff Central (CDF)", "Nottingham (NOT)", "Sheffield (SHF)"
+];
+
+const RAIN_DATA_SNIPPETS = [
+  "✓ 94.2% On Time", "⚡ London → MAN", "£67.50 ADVANCE", 
+  "LNER 08:45", "Platform 5", "Delayed 3m", 
+  "KGX", "EUS", "GWR", "98% Probability", 
+  "£122.30", "On Time", "Cancelled", "AVANTI"
+];
+
+// --- Helper Components ---
+
+const ProbabilityRing = ({ percentage, color = "#22c55e" }) => {
+  const radius = 24;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="relative flex items-center justify-center w-16 h-16">
+      <svg className="transform -rotate-90 w-16 h-16">
+        <circle
+          className="text-neutral-800"
+          strokeWidth="4"
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx="32"
+          cy="32"
+        />
+        <circle
+          style={{ stroke: color, transition: 'stroke-dashoffset 1s ease-in-out' }}
+          strokeWidth="4"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          fill="transparent"
+          r={radius}
+          cx="32"
+          cy="32"
+        />
+      </svg>
+      <span className="absolute text-xs font-bold text-white">{percentage}%</span>
+    </div>
+  );
+};
+
+// --- Main Application Component ---
+
+export default function App() {
+  // State
+  const [searchState, setSearchState] = useState('idle'); // idle, loading, results
+  const [fromStation, setFromStation] = useState('');
+  const [toStation, setToStation] = useState('');
+  const [date, setDate] = useState('');
+  const [results, setResults] = useState([]);
+  
+  // Gemini Integration State
+  const [tripBrief, setTripBrief] = useState(null);
+  const [isGeneratingBrief, setIsGeneratingBrief] = useState(false);
+  const [analyzingCardId, setAnalyzingCardId] = useState(null);
+  const [cardAnalyses, setCardAnalyses] = useState({}); // Map of id -> text
+
+  // Autocomplete State
+  const [fromSuggestions, setFromSuggestions] = useState([]);
+  const [toSuggestions, setToSuggestions] = useState([]);
+  const [activeField, setActiveField] = useState(null);
+
+  // Canvas Ref for Rain
+  const canvasRef = useRef(null);
+
+  // --- Data Rain Animation Logic ---
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let particles = [];
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight * 0.6; // Rain only in top 60%
+    };
+
+    class Particle {
+      constructor() {
+        this.reset();
+        this.y = Math.random() * canvas.height; // Start scattered
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = -50;
+        this.speed = 1 + Math.random() * 1.5; // Slow, floating fall
+        this.text = RAIN_DATA_SNIPPETS[Math.floor(Math.random() * RAIN_DATA_SNIPPETS.length)];
+        this.opacity = 0.1 + Math.random() * 0.4;
+        this.size = 10 + Math.random() * 4;
+        // Color logic based on text content for visual flair
+        if (this.text.includes("Delayed") || this.text.includes("Cancelled")) this.color = "rgba(239, 68, 68,"; // Red
+        else if (this.text.includes("On Time") || this.text.includes("%")) this.color = "rgba(34, 197, 94,"; // Green
+        else this.color = "rgba(100, 116, 139,"; // Slate
+      }
+
+      update() {
+        this.y += this.speed;
+        if (this.y > canvas.height + 50) {
+          this.reset();
+        }
+      }
+
+      draw() {
+        ctx.font = `${this.size}px 'JetBrains Mono', monospace`;
+        ctx.fillStyle = `${this.color} ${this.opacity})`;
+        ctx.fillText(this.text, this.x, this.y);
+      }
+    }
+
+    const initParticles = () => {
+      particles = Array.from({ length: 40 }, () => new Particle());
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    initParticles();
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  // --- Gemini API Functions ---
+
+  const callGemini = async (prompt) => {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      );
+      
+      if (!response.ok) throw new Error('API Call failed');
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Analysis currently unavailable.";
+    } catch (error) {
+      console.error("Gemini Error:", error);
+      return "Unable to connect to AI services. Please try again later.";
+    }
+  };
+
+  const generateTripBrief = async () => {
+    setIsGeneratingBrief(true);
+    
+    // Construct a context string from the search results
+    const optionsContext = results.map(r => 
+      `Option ${r.id}: ${r.operator} departing ${r.departure}, £${r.price.advance}, ${r.probability}% on-time probability.`
+    ).join('\n');
+
+    const prompt = `You are an expert UK rail travel consultant. Analyze these journey options from ${fromStation} to ${toStation}:
+    ${optionsContext}
+    
+    Provide a "Smart Trip Brief". Identify the best "Value Pick" (good price/reliability balance) and the "Fastest/Most Reliable" option. Keep it under 50 words. Use formatting like *bold* for emphasis. Add a travel tip for the destination city if you know one.`;
+
+    const text = await callGemini(prompt);
+    setTripBrief(text);
+    setIsGeneratingBrief(false);
+  };
+
+  const analyzeRisk = async (train) => {
+    if (cardAnalyses[train.id]) return; // Don't regenerate if exists
+    setAnalyzingCardId(train.id);
+
+    const prompt = `Analyze the specific delay risk for this train journey:
+    Operator: ${train.operator}
+    Route: ${fromStation} to ${toStation}
+    Time: ${train.departure}
+    Current On-Time Probability: ${train.probability}%
+    Current Status: ${train.status}
+    
+    Act as a predictive data analyst. Explain *why* this probability might be what it is based on typical factors for this route (e.g., congestion at specific junctions like Clapham Junction or York, rolling stock issues, crew displacement). 
+    If the probability is high (>90%), explain why it's a safe bet.
+    If low, warn about specific pinch points.
+    Keep it to 2 sentences. Be technical but accessible.`;
+
+    const text = await callGemini(prompt);
+    setCardAnalyses(prev => ({ ...prev, [train.id]: text }));
+    setAnalyzingCardId(null);
+  };
+
+  // --- Handlers ---
+
+  const handleStationInput = (value, type) => {
+    if (type === 'from') {
+      setFromStation(value);
+      setFromSuggestions(value.length > 0 ? UK_STATIONS.filter(s => s.toLowerCase().includes(value.toLowerCase())) : []);
+    } else {
+      setToStation(value);
+      setToSuggestions(value.length > 0 ? UK_STATIONS.filter(s => s.toLowerCase().includes(value.toLowerCase())) : []);
+    }
+  };
+
+  const selectStation = (station, type) => {
+    if (type === 'from') {
+      setFromStation(station);
+      setFromSuggestions([]);
+    } else {
+      setToStation(station);
+      setToSuggestions([]);
+    }
+    setActiveField(null);
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!fromStation || !toStation || !date) return;
+
+    setSearchState('loading');
+    setTripBrief(null);
+    setCardAnalyses({});
+
+    // Simulate API delay
+    setTimeout(() => {
+      // Generate mock results
+      const mockResults = Array.from({ length: 4 }).map((_, i) => {
+        const baseHour = 8 + i;
+        const isDelayed = Math.random() > 0.7;
+        const probability = isDelayed ? Math.floor(Math.random() * 30) + 40 : Math.floor(Math.random() * 15) + 85;
+        
+        return {
+          id: i,
+          operator: i % 2 === 0 ? "LNER" : "Avanti West Coast",
+          departure: `${baseHour}:15`,
+          arrival: `${baseHour + 2}:42`,
+          duration: "2h 27m",
+          changes: 0,
+          platform: Math.floor(Math.random() * 10) + 1,
+          status: isDelayed ? `Delayed ${Math.floor(Math.random() * 15)}m` : "On Time",
+          probability: probability,
+          price: {
+            advance: (45.50 + Math.random() * 20).toFixed(2),
+            anytime: (120.00 + Math.random() * 30).toFixed(2)
+          }
+        };
+      });
+      
+      setResults(mockResults);
+      setSearchState('results');
+    }, 1500);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-blue-500/30 overflow-x-hidden relative">
+      
+      {/* --- Background Gradients --- */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-green-500/5 blur-[100px] rounded-full" />
+      </div>
+
+      {/* --- Data Rain Canvas --- */}
+      <div className="absolute top-0 left-0 w-full h-[60vh] z-0 pointer-events-none mask-gradient-to-b">
+        <canvas ref={canvasRef} className="w-full h-full opacity-60" />
+        {/* Gradient Fade at bottom of canvas */}
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-b from-transparent to-[#0A0A0A]" />
+      </div>
+
+      {/* --- Main Content --- */}
+      <div className="relative z-10 container mx-auto px-4 min-h-screen flex flex-col">
+        
+        {/* Header */}
+        <header className="flex justify-between items-center py-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Train className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-400">
+              RailFair
+            </span>
+          </div>
+          <nav className="hidden md:flex gap-6 text-sm font-medium text-neutral-400">
+            <a href="#" className="hover:text-white transition-colors">Live Map</a>
+            <a href="#" className="hover:text-white transition-colors">Analysis</a>
+            <a href="#" className="hover:text-white transition-colors">API</a>
+          </nav>
+          <div className="w-8 md:hidden" /> {/* Spacer for mobile */}
+        </header>
+
+        {/* Hero & Search Section */}
+        <main className={`flex-1 flex flex-col items-center transition-all duration-700 ${searchState === 'results' ? 'justify-start pt-8' : 'justify-center pb-20'}`}>
+          
+          {/* Hero Text (Fades out on search) */}
+          <div className={`text-center mb-12 transition-all duration-500 z-20 ${searchState === 'results' ? 'opacity-0 h-0 overflow-hidden mb-0' : 'opacity-100'}`}>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 drop-shadow-2xl text-white">
+              Predict delays. <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 brightness-110 drop-shadow-sm">
+                Save on fares.
+              </span>
+            </h1>
+            <p className="text-neutral-200 max-w-lg mx-auto text-lg font-medium drop-shadow-lg">
+              AI-powered forecasting for UK rail travel. Plan with confidence.
+            </p>
+          </div>
+
+          {/* Search Card */}
+          <div className={`w-full max-w-4xl transition-all duration-700 ease-out ${searchState === 'results' ? 'transform -translate-y-0' : ''}`}>
+            <form onSubmit={handleSearch} className="relative group">
+              {/* Glow Effect */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500" />
+              
+              {/* Glass Container */}
+              <div className="relative bg-neutral-900/80 backdrop-blur-xl border border-white/10 rounded-xl p-2 md:p-4 shadow-2xl grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                
+                {/* From Input */}
+                <div className="md:col-span-4 relative z-20">
+                  <div className="flex items-center px-4 h-14 bg-white/5 rounded-lg border border-white/5 focus-within:border-blue-500/50 focus-within:bg-white/10 transition-all group/input">
+                    <MapPin className="w-5 h-5 text-neutral-400 group-focus-within/input:text-blue-400" />
+                    <input
+                      type="text"
+                      value={fromStation}
+                      onChange={(e) => handleStationInput(e.target.value, 'from')}
+                      onFocus={() => setActiveField('from')}
+                      placeholder="From Station"
+                      className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-neutral-500 ml-3"
+                    />
+                  </div>
+                  {activeField === 'from' && fromSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-neutral-900 border border-white/10 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto z-50">
+                      {fromSuggestions.map((s, i) => (
+                        <div key={i} onClick={() => selectStation(s, 'from')} className="px-4 py-3 hover:bg-white/10 cursor-pointer text-sm text-neutral-300 transition-colors">
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Arrow Icon */}
+                <div className="hidden md:flex md:col-span-1 justify-center text-neutral-600">
+                  <ArrowRight className="w-5 h-5" />
+                </div>
+
+                {/* To Input */}
+                <div className="md:col-span-4 relative z-20">
+                  <div className="flex items-center px-4 h-14 bg-white/5 rounded-lg border border-white/5 focus-within:border-blue-500/50 focus-within:bg-white/10 transition-all group/input">
+                    <MapPin className="w-5 h-5 text-neutral-400 group-focus-within/input:text-blue-400" />
+                    <input
+                      type="text"
+                      value={toStation}
+                      onChange={(e) => handleStationInput(e.target.value, 'to')}
+                      onFocus={() => setActiveField('to')}
+                      placeholder="To Station"
+                      className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-neutral-500 ml-3"
+                    />
+                  </div>
+                  {activeField === 'to' && toSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-neutral-900 border border-white/10 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto z-50">
+                      {toSuggestions.map((s, i) => (
+                        <div key={i} onClick={() => selectStation(s, 'to')} className="px-4 py-3 hover:bg-white/10 cursor-pointer text-sm text-neutral-300 transition-colors">
+                          {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Date Picker */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center px-4 h-14 bg-white/5 rounded-lg border border-white/5 focus-within:border-blue-500/50 focus-within:bg-white/10 transition-all group/input relative overflow-hidden">
+                    <Calendar className="w-5 h-5 text-neutral-400 group-focus-within/input:text-blue-400 pointer-events-none" />
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-neutral-500 ml-2 [color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+
+                {/* Search Button */}
+                <div className="md:col-span-1 h-14">
+                  <button 
+                    type="submit"
+                    disabled={searchState === 'loading'}
+                    className="w-full h-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center justify-center transition-all shadow-lg shadow-blue-600/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {searchState === 'loading' ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Search className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+
+              </div>
+            </form>
+          </div>
+
+          {/* Results Section (Slide Up) */}
+          {searchState === 'results' && (
+            <div className="w-full max-w-4xl mt-8 animate-in slide-in-from-bottom-10 fade-in duration-700 pb-20">
+              
+              {/* Results Header & Smart Brief */}
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex justify-between items-end px-2">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">
+                      {fromStation.split('(')[0]} <span className="text-neutral-500 px-2">→</span> {toStation.split('(')[0]}
+                    </h2>
+                    <p className="text-sm text-neutral-400 mt-1">
+                      {new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </p>
+                  </div>
+                  
+                  {/* Gemini Trip Brief Button */}
+                  {!tripBrief && !isGeneratingBrief && (
+                    <button 
+                      onClick={generateTripBrief}
+                      className="flex items-center gap-2 text-xs font-medium bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-4 py-2 rounded-full transition-all shadow-lg shadow-purple-500/20"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Generate Smart Brief
+                    </button>
+                  )}
+                  {isGeneratingBrief && (
+                    <div className="flex items-center gap-2 text-xs font-medium bg-neutral-800 text-neutral-300 px-4 py-2 rounded-full animate-pulse">
+                      <Bot className="w-3 h-3" />
+                      Thinking...
+                    </div>
+                  )}
+                </div>
+
+                {/* Smart Brief Display */}
+                {tripBrief && (
+                  <div className="mx-2 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl animate-in fade-in duration-500">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-2 rounded-lg shrink-0">
+                         <Sparkles className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-purple-200 mb-1">Smart Trip Brief</h3>
+                        <p className="text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap">{tripBrief}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Cards Grid */}
+              <div className="grid gap-4">
+                {results.map((train, idx) => (
+                  <div 
+                    key={train.id}
+                    className="group bg-neutral-900/50 backdrop-blur-md border border-white/5 hover:border-white/10 rounded-xl p-5 transition-all hover:bg-neutral-800/50 relative overflow-hidden"
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                  >
+                    {/* Card Glow on Hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:via-transparent group-hover:to-transparent transition-all duration-500" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center relative z-10">
+                      
+                      {/* Times & Operator */}
+                      <div className="md:col-span-4 flex flex-col justify-center">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-2xl font-bold text-white font-mono">{train.departure}</span>
+                          <ArrowRight className="w-4 h-4 text-neutral-600" />
+                          <span className="text-2xl font-bold text-neutral-400 font-mono">{train.arrival}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-neutral-500">
+                          <span className="font-medium text-neutral-300">{train.operator}</span>
+                          <span>•</span>
+                          <span>{train.duration}</span>
+                          <span>•</span>
+                          <span>{train.changes === 0 ? 'Direct' : `${train.changes} Chg`}</span>
+                        </div>
+                      </div>
+
+                      {/* Probability Gauge */}
+                      <div className="md:col-span-3 flex items-center gap-3 border-l-0 md:border-l border-white/5 md:pl-6">
+                        <ProbabilityRing 
+                          percentage={train.probability} 
+                          color={train.probability > 80 ? '#22c55e' : train.probability > 60 ? '#eab308' : '#ef4444'} 
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-xs text-neutral-400 uppercase tracking-wider">On-Time Prob.</span>
+                          <div className="flex items-center gap-1">
+                            <span className={`text-sm font-bold ${train.probability > 80 ? 'text-green-400' : train.probability > 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                              {train.probability > 85 ? 'High Confidence' : 'Risk of Delay'}
+                            </span>
+                          </div>
+                          {/* Analyze Risk Button */}
+                          <button 
+                            onClick={() => analyzeRisk(train)}
+                            disabled={!!cardAnalyses[train.id] || analyzingCardId === train.id}
+                            className="text-xs mt-2 flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50 disabled:cursor-default text-left"
+                          >
+                             {analyzingCardId === train.id ? (
+                               <><Loader2 className="w-3 h-3 animate-spin" /> Analyzing...</>
+                             ) : cardAnalyses[train.id] ? (
+                               <><CheckCircle2 className="w-3 h-3" /> Analysis Ready</>
+                             ) : (
+                               <><Sparkles className="w-3 h-3" /> Analyze Risk</>
+                             )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Fares */}
+                      <div className="md:col-span-5 flex items-center justify-between md:justify-end gap-4">
+                         <div className="flex flex-col items-end">
+                            <span className="text-xs text-neutral-400 mb-1">Advance Single</span>
+                            <div className="bg-white/5 border border-white/10 px-3 py-1 rounded flex items-center gap-2 group-hover:border-blue-500/30 transition-colors cursor-pointer">
+                              <span className="text-lg font-bold text-white">£{train.price.advance}</span>
+                              <ChevronRight className="w-4 h-4 text-neutral-500" />
+                            </div>
+                         </div>
+                         <div className="flex flex-col items-end opacity-50 group-hover:opacity-100 transition-opacity">
+                            <span className="text-xs text-neutral-500 mb-1">Anytime</span>
+                            <span className="text-sm font-medium text-neutral-400 line-through decoration-red-500/50">£{train.price.anytime}</span>
+                         </div>
+                      </div>
+                    </div>
+
+                    {/* Gemini Analysis Result (Dropdown) */}
+                    {cardAnalyses[train.id] && (
+                      <div className="mt-4 pt-4 border-t border-white/5 animate-in slide-in-from-top-2">
+                        <div className="flex items-start gap-3 bg-blue-500/5 p-3 rounded-lg border border-blue-500/10">
+                          <Bot className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                          <div>
+                            <h4 className="text-xs font-bold text-blue-400 mb-1 uppercase tracking-wide">Gemini Risk Analyst</h4>
+                            <p className="text-sm text-neutral-300 leading-relaxed">{cardAnalyses[train.id]}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </main>
+
+      </div>
+      
+      <style>{`
+        .mask-gradient-to-b {
+          mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+      `}</style>
+    </div>
+  );
+}

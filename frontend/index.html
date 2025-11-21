@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RailFair - Intelligent Travel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        },
+                        blue: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out forwards',
+                        'slide-up': 'slideUp 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-white text-slate-900 font-sans antialiased selection:bg-blue-100 overflow-x-hidden">
+
+    <!-- Background Accents -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div class="absolute top-0 w-full h-64 bg-gradient-to-b from-slate-50 to-transparent"></div>
+    </div>
+
+    <!-- Data Rain Canvas (Subtle) -->
+    <div class="absolute top-0 left-0 w-full h-[55vh] z-0 pointer-events-none mask-gradient-to-b-light">
+        <canvas id="rain-canvas" class="w-full h-full opacity-60"></canvas>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 container mx-auto px-4 min-h-screen flex flex-col max-w-5xl">
+
+        <!-- Header -->
+        <header class="flex justify-between items-center py-8 animate-fade-in">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 bg-blue-600 text-white rounded-lg flex items-center justify-center shadow-sm">
+                    <i data-lucide="train" class="w-5 h-5"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-900">RailFair</span>
+            </div>
+            <nav class="hidden md:flex gap-8 text-sm font-medium text-slate-500">
+                <a href="#" class="hover:text-blue-600 transition-colors">Map</a>
+                <a href="#" class="hover:text-blue-600 transition-colors">Analysis</a>
+                <a href="#" class="hover:text-blue-600 transition-colors">API</a>
+            </nav>
+        </header>
+
+        <!-- Hero & Search -->
+        <main id="main-container"
+            class="flex-1 flex flex-col items-center justify-center pb-24 transition-all duration-700">
+
+            <!-- Hero Text -->
+            <div id="hero-text" class="text-center mb-12 transition-all duration-500 animate-slide-up">
+                <h1 class="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-slate-900 leading-tight">
+                    <span class="block mb-3">Predict delays.</span>
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500">
+                        Save on fares.
+                    </span>
+                </h1>
+                <p class="text-slate-500 max-w-md mx-auto text-lg">
+                    Intelligent rail forecasting. No clutter.
+                </p>
+            </div>
+
+            <!-- Search Card -->
+            <div id="search-card" class="w-full max-w-4xl transition-all duration-700 ease-out animate-slide-up relative z-30"
+                style="animation-delay: 0.2s;">
+                <form id="search-form" class="relative">
+                    <div
+                        class="relative bg-white border border-slate-200 rounded-xl p-3 shadow-xl shadow-slate-200/60 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+
+                        <!-- Origin -->
+                        <div class="md:col-span-3 relative z-20">
+                            <div
+                                class="flex items-center px-4 h-14 bg-white rounded-lg border border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all group">
+                                <i data-lucide="map-pin"
+                                    class="w-5 h-5 text-slate-400 shrink-0 group-focus-within:text-blue-500 transition-colors"></i>
+                                <input type="text" id="origin" required placeholder="From" autocomplete="off"
+                                    class="w-full bg-transparent border-none focus:outline-none text-slate-900 placeholder-slate-400 ml-2 font-medium truncate uppercase">
+                            </div>
+                            <div id="origin-suggestions"
+                                class="absolute top-full left-0 w-full mt-2 bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden max-h-60 overflow-y-auto z-50 hidden autocomplete-dropdown">
+                            </div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="hidden md:flex md:col-span-1 justify-center text-slate-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </div>
+
+                        <!-- Destination -->
+                        <div class="md:col-span-3 relative z-20">
+                            <div
+                                class="flex items-center px-4 h-14 bg-white rounded-lg border border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all group">
+                                <i data-lucide="map-pin"
+                                    class="w-5 h-5 text-slate-400 shrink-0 group-focus-within:text-blue-500 transition-colors"></i>
+                                <input type="text" id="destination" required placeholder="To" autocomplete="off"
+                                    class="w-full bg-transparent border-none focus:outline-none text-slate-900 placeholder-slate-400 ml-2 font-medium truncate uppercase">
+                            </div>
+                            <div id="destination-suggestions"
+                                class="absolute top-full left-0 w-full mt-2 bg-white border border-slate-100 rounded-lg shadow-lg overflow-hidden max-h-60 overflow-y-auto z-50 hidden autocomplete-dropdown">
+                            </div>
+                        </div>
+
+                        <!-- Date/Time (Combined for simplicity in UI) -->
+                        <div class="md:col-span-3">
+                            <div
+                                class="flex items-center px-4 h-14 bg-white rounded-lg border border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all relative group">
+                                <i data-lucide="calendar"
+                                    class="w-5 h-5 text-slate-400 shrink-0 group-focus-within:text-blue-500 transition-colors"></i>
+                                <input type="datetime-local" id="datetime" required
+                                    class="w-full bg-transparent border-none focus:outline-none text-slate-900 placeholder-slate-400 ml-1 text-sm font-medium pr-1">
+                            </div>
+                        </div>
+
+                        <!-- Button -->
+                        <div class="md:col-span-2 h-14">
+                            <button type="submit" id="search-btn"
+                                class="w-full h-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-all shadow-lg shadow-blue-600/20 disabled:opacity-70 disabled:cursor-not-allowed">
+                                <i data-lucide="search" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Container -->
+            <div id="results-container" class="w-full max-w-4xl mt-10 hidden">
+
+                <!-- Header -->
+                <div class="flex flex-col gap-4 mb-6 animate-fade-in">
+                    <div class="flex justify-between items-end px-1">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900" id="route-title">
+                                London <span class="text-slate-400 px-2">→</span> Manchester
+                            </h2>
+                            <p class="text-sm text-slate-500 mt-1" id="route-date">
+                                Friday, 24 November
+                            </p>
+                        </div>
+                        <button
+                            class="flex items-center gap-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-full transition-colors border border-blue-100">
+                            <i data-lucide="sparkles" class="w-3 h-3"></i>
+                            Smart Brief
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cards List -->
+                <div id="results-list" class="flex flex-col gap-4">
+                    <!-- Results injected here -->
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

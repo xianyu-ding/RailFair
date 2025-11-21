@@ -1,0 +1,148 @@
+# HSP Data Collection Configuration - Phase 2: Recent Operational Data
+# Purpose: Collect recent data reflecting current operational status
+# Date Range: 2025-09-01 to 2025-10-31 (61 days)
+# Expected Records: ~12,000
+
+api:
+  base_url: "https://hsp-prod.rockshore.net/api/v1"
+  timeout: 180  # Increased timeout for safety
+  # Request interval: 1-3 seconds (faster than Phase 1 for recent data)
+  request_interval:
+    min: 1.0  # Minimum 1 second
+    max: 3.0  # Maximum 3 seconds
+  
+auth:
+  username: ""
+  password: ""
+
+data_collection:
+  # Phase 2: Recent Operational Status
+  from_date: "2025-09-01"
+  to_date: "2025-10-31"
+  days: "WEEKDAY,WEEKEND"
+  from_time: "0600"
+  to_time: "2200"
+  num_services: 500
+  delay_between_requests: 1.5
+  delay_between_routes: 5.0
+  
+retry:
+  max_attempts: 3
+  initial_delay: 1.0
+  max_delay: 30.0
+  backoff_multiplier: 2
+  jitter: true
+
+# Same 10 routes as Phase 1
+routes:
+  - name: "EUS-MAN"
+    description: "London Euston - Manchester Piccadilly"
+    from_loc: "EUS"
+    to_loc: "MAN"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 1
+    
+  - name: "KGX-EDB"
+    description: "London King's Cross - Edinburgh"
+    from_loc: "KGX"
+    to_loc: "EDB"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 1
+    
+  - name: "PAD-BRI"
+    description: "London Paddington - Bristol Temple Meads"
+    from_loc: "PAD"
+    to_loc: "BRI"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 1
+    
+  - name: "LST-NRW"
+    description: "London Liverpool Street - Norwich"
+    from_loc: "LST"
+    to_loc: "NRW"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 1
+    
+  - name: "EUS-BHM"
+    description: "London Euston - Birmingham New Street (replaces MYB-BHM)"
+    from_loc: "EUS"
+    to_loc: "BHM"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 1
+    
+  - name: "MCV-LIV"
+    description: "Manchester Victoria - Liverpool Lime Street"
+    from_loc: "MCV"
+    to_loc: "LIV"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 2
+    
+  - name: "MYB-OXF"
+    description: "London Marylebone - Oxford"
+    from_loc: "MYB"
+    to_loc: "OXF"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 2
+    
+  - name: "MYB-BMO"
+    description: "London Marylebone - Birmingham Moor Street"
+    from_loc: "MYB"
+    to_loc: "BMO"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 2
+    
+  - name: "BHM-MAN"
+    description: "Birmingham New Street - Manchester Piccadilly"
+    from_loc: "BHM"
+    to_loc: "MAN"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 2
+    
+  - name: "BRI-BHM"
+    description: "Bristol Temple Meads - Birmingham New Street"
+    from_loc: "BRI"
+    to_loc: "BHM"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 2
+    
+  - name: "EDB-GLC"
+    description: "Edinburgh - Glasgow Central"
+    from_loc: "EDB"
+    to_loc: "GLC"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 3
+    
+  - name: "MCV-LDS"
+    description: "Manchester Victoria - Leeds"
+    from_loc: "MCV"
+    to_loc: "LDS"
+    from_time: "0600"
+    to_time: "2200"
+    priority: 3
+
+database:
+  path: "data/railfair.db"
+  batch_size: 100
+  
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/hsp_phase2_collection.log"
+  console: true
+
+output:
+  save_raw_json: true
+  raw_data_dir: "data/raw/hsp/phase2"
+  progress_file: "data/progress_phase2.json"
+  statistics_file: "data/stats_phase2.json"

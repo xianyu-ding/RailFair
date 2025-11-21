@@ -1,0 +1,57 @@
+# UK Rail Delay Predictor - Requirements
+# Updated: Day 2 - 2025-11-12
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.23
+aiosqlite==0.19.0
+
+# Data Validation & Models
+python-multipart==0.0.6
+email-validator==2.1.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2
+
+# Machine Learning (for future use)
+scikit-learn==1.3.2
+pandas==2.1.3
+numpy==1.26.2
+
+# API Clients
+requests==2.31.0
+
+# Data Processing
+python-dateutil==2.8.2
+
+# Utilities
+python-dotenv==1.0.0
+python-json-logger==2.0.7
+
+# Development Tools
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+isort==5.12.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.5.2
+
+# Performance
+ujson==5.9.0
+
+# Monitoring (for production)
+prometheus-client==0.19.0
+
+# Day 13 Optimizations
+redis==5.0.1
+locust==2.17.0

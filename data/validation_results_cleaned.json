@@ -1,0 +1,203 @@
+{
+  "summary": {
+    "metrics_records": 1451,
+    "details_records": 72339,
+    "unique_routes": 60,
+    "unique_services": 8643,
+    "date_range": {
+      "start": "2024-10-01",
+      "end": "2025-10-31"
+    },
+    "toc_count": 10,
+    "location_count": 237
+  },
+  "quality_checks": {
+    "completeness": {
+      "scheduled_departure": {
+        "non_null": 63229,
+        "total": 72339,
+        "percentage": 87.41
+      },
+      "scheduled_arrival": {
+        "non_null": 62119,
+        "total": 72339,
+        "percentage": 85.87
+      },
+      "actual_departure": {
+        "non_null": 60338,
+        "total": 72339,
+        "percentage": 83.41
+      },
+      "actual_arrival": {
+        "non_null": 59172,
+        "total": 72339,
+        "percentage": 81.8
+      },
+      "departure_delay_minutes": {
+        "non_null": 60330,
+        "total": 72339,
+        "percentage": 83.4
+      },
+      "arrival_delay_minutes": {
+        "non_null": 59089,
+        "total": 72339,
+        "percentage": 81.68
+      }
+    },
+    "consistency": {
+      "time_sequence_errors": 0,
+      "delay_calculation_errors": 1
+    },
+    "delay_quality": {
+      "total_records": 72339,
+      "cancelled_count": 3354,
+      "records_with_delay": 59089,
+      "mean_delay": 6.56,
+      "median_delay": 2,
+      "std_deviation": 12.71,
+      "orr_metrics": {
+        "on_time": 27453,
+        "on_time_rate": 46.46,
+        "time_to_3": 35057,
+        "time_to_3_rate": 59.33,
+        "time_to_15": 50697,
+        "time_to_15_rate": 85.8,
+        "time_to_30": 55897,
+        "time_to_30_rate": 94.6,
+        "time_to_60": 58549,
+        "time_to_60_rate": 99.09,
+        "over_60": 540,
+        "over_60_rate": 0.91
+      },
+      "cancelled_rate": 4.64
+    },
+    "route_coverage": {
+      "EUS-MAN": 472,
+      "KGX-EDB": 197,
+      "PAD-BRI": 170,
+      "LST-NRW": 89,
+      "MYB-BHM": 0,
+      "MAN-LIV": 1,
+      "BHM-MAN": 21,
+      "BRI-BHM": 6,
+      "EDB-GLC": 0,
+      "MAN-LDS": 0
+    },
+    "temporal_distribution": {
+      "total_days": 139,
+      "missing_days": 257,
+      "avg_daily_records": 520.0,
+      "weekday_distribution": {
+        "Monday": 34092,
+        "Tuesday": 2908,
+        "Wednesday": 1684,
+        "Thursday": 1863,
+        "Friday": 3136,
+        "Saturday": 16458,
+        "Sunday": 12198
+      }
+    },
+    "toc_analysis": {
+      "VT": {
+        "total_services": 21373,
+        "cancelled": 1376,
+        "services_with_delay": 16316,
+        "avg_delay": 11.34,
+        "on_time_rate": 24.6
+      },
+      "GW": {
+        "total_services": 15607,
+        "cancelled": 657,
+        "services_with_delay": 13078,
+        "avg_delay": 5.14,
+        "on_time_rate": 48.46
+      },
+      "XC": {
+        "total_services": 11299,
+        "cancelled": 751,
+        "services_with_delay": 9840,
+        "avg_delay": 5.75,
+        "on_time_rate": 52.35
+      },
+      "GR": {
+        "total_services": 10863,
+        "cancelled": 242,
+        "services_with_delay": 9384,
+        "avg_delay": 6.61,
+        "on_time_rate": 49.08
+      },
+      "LE": {
+        "total_services": 10293,
+        "cancelled": 245,
+        "services_with_delay": 8012,
+        "avg_delay": 0.68,
+        "on_time_rate": 78.12
+      },
+      "NT": {
+        "total_services": 846,
+        "cancelled": 0,
+        "services_with_delay": 809,
+        "avg_delay": 4.73,
+        "on_time_rate": 30.9
+      },
+      "LD": {
+        "total_services": 767,
+        "cancelled": 18,
+        "services_with_delay": 506,
+        "avg_delay": 8.55,
+        "on_time_rate": 36.76
+      },
+      "TP": {
+        "total_services": 647,
+        "cancelled": 18,
+        "services_with_delay": 588,
+        "avg_delay": 2.09,
+        "on_time_rate": 66.5
+      },
+      "EM": {
+        "total_services": 586,
+        "cancelled": 34,
+        "services_with_delay": 516,
+        "avg_delay": 3.91,
+        "on_time_rate": 44.96
+      },
+      "AW": {
+        "total_services": 58,
+        "cancelled": 13,
+        "services_with_delay": 40,
+        "avg_delay": 0.9,
+        "on_time_rate": 65.0
+      }
+    },
+    "anomalies": [],
+    "freshness": {
+      "service_date_range": {
+        "min": "2024-10-01",
+        "max": "2025-10-31"
+      },
+      "fetch_time_range": {
+        "latest": "2025-11-13T23:59:19.558920",
+        "earliest": "2025-11-12 17:06:50.624772"
+      },
+      "age_hours": 0.0,
+      "collection_span_hours": 30.9
+    }
+  },
+  "warnings": [
+    "Delay calculation inconsistency: 1 records",
+    "Extreme delays detected: 540 records",
+    "Low data routes: LST-NRW, MAN-LIV, BHM-MAN, BRI-BHM",
+    "Missing data for 257 days"
+  ],
+  "errors": [
+    "Missing routes: MYB-BHM, EDB-GLC, MAN-LDS"
+  ],
+  "recommendations": [
+    "\u274c Address critical errors before proceeding with modeling",
+    "\u26a0\ufe0f Review and address data quality warnings",
+    "\ud83d\udcca Consider collecting weekend data for better coverage",
+    "\ud83d\udd04 Implement incremental data updates for freshness",
+    "\ud83d\udcdd Add metadata collection for TOC and station information",
+    "\ud83c\udfaf Focus on high-traffic routes for initial predictions"
+  ]
+}

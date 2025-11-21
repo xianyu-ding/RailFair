@@ -1,0 +1,88 @@
+# HSP API Configuration
+api:
+  base_url: "https://hsp-prod.rockshore.net/api/v1"
+  endpoints:
+    service_metrics: "/serviceMetrics"
+    service_details: "/serviceDetails"
+  
+  # Timeout settings (seconds)
+  timeout: 30
+  
+  # Rate limiting
+  rate_limit:
+    requests_per_minute: 60
+    delay_between_requests: 1.0
+
+# Authentication
+# Credentials should be loaded from environment variables:
+# HSP_EMAIL and HSP_PASSWORD
+
+# Retry configuration
+retry:
+  max_attempts: 3
+  initial_delay: 1.0  # seconds
+  max_delay: 30.0     # seconds
+  exponential_base: 2.0
+  jitter: true
+
+# Test routes for validation
+test_routes:
+  - name: "EUS-MAN"
+    from_loc: "EUS"  # London Euston
+    to_loc: "MAN"    # Manchester Piccadilly
+    from_time: "0700"
+    to_time: "0800"
+  
+  - name: "BTN-VIC"
+    from_loc: "BTN"  # Brighton
+    to_loc: "VIC"    # London Victoria
+    from_time: "0700"
+    to_time: "0800"
+
+# Date range for initial testing
+date_range:
+  # Use recent completed months for testing
+  from_date: "2024-10-01"
+  to_date: "2024-10-31"
+  days: "WEEKDAY"  # WEEKDAY, SATURDAY, or SUNDAY
+
+# Tolerance settings (minutes)
+tolerance:
+  values: ["2", "5", "10"]
+
+# Timezone configuration
+timezone:
+  default: "Europe/London"
+  api_timezone: "Europe/London"  # HSP uses UK time
+  database_timezone: "UTC"       # Store in UTC
+
+# Data validation
+validation:
+  required_fields:
+    service_metrics:
+      - "origin_location"
+      - "destination_location"
+      - "scheduled_departure_time"
+      - "scheduled_arrival_time"
+      - "toc_code"
+    
+    service_details:
+      - "date_of_service"
+      - "toc_code"
+      - "rid"
+      - "locations"
+  
+  max_delay_minutes: 1440  # 24 hours
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/hsp_fetch.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_file_size: 10485760  # 10MB
+  backup_count: 5
+
+# Database
+database:
+  batch_size: 100
+  commit_interval: 500

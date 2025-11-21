@@ -1,0 +1,33 @@
+============================================================
+METADATA SUMMARY REPORT
+Generated: 2025-11-13 15:15:22
+============================================================
+
+🚂 TOC Metadata
+----------------------------------------
+Total TOCs: 20
+  challenged: 2 TOCs
+  good: 3 TOCs
+  premium: 5 TOCs
+  standard: 10 TOCs
+
+🚉 Station Metadata
+----------------------------------------
+Total Stations: 22
+Major Hubs: 17
+
+🛤️ Route Metadata
+----------------------------------------
+Total Routes: 10
+  Tier 1: 3 routes
+  Tier 2: 4 routes
+  Tier 3: 3 routes
+
+💷 Compensation Rules
+----------------------------------------
+Total Rules: 42
+
+✅ Data Enrichment
+----------------------------------------
+TOCs with names: 7
+Stations with names: 15

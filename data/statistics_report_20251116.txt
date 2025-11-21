@@ -1,0 +1,197 @@
+🔍 RailFair Statistics Query Demo
+
+📊 All Routes (by reliability):
+------------------------------------------------------------
+MYB-OXF         Grade: A   PPM-5:  96.2% PPM-10:  98.4%
+EDB-GLC         Grade: A   PPM-5:  93.8% PPM-10:  97.0%
+BRI-ELY         Grade: A   PPM-5:  92.9% PPM-10:  92.9%
+LST-NRW         Grade: A   PPM-5:  93.2% PPM-10:  96.7%
+MYB-BMO         Grade: A   PPM-5:  89.6% PPM-10:  94.3%
+MYB-SBJ         Grade: A   PPM-5:  89.9% PPM-10:  96.0%
+LIV-SBY         Grade: A   PPM-5:  87.2% PPM-10:  95.7%
+MCV-SBY         Grade: A   PPM-5:  87.2% PPM-10:  95.7%
+BRI-CBG         Grade: A   PPM-5:  90.9% PPM-10:  90.9%
+KGX-GLC         Grade: A   PPM-5: 100.0% PPM-10: 100.0%
+SNO-GLC         Grade: A   PPM-5: 100.0% PPM-10: 100.0%
+MYB-BSW         Grade: B   PPM-5:  87.1% PPM-10:  93.2%
+BRI-SSD         Grade: B   PPM-5:  90.0% PPM-10:  90.0%
+NCL-MAN         Grade: B   PPM-5:  83.8% PPM-10:  94.5%
+MCV-DAR         Grade: B   PPM-5:  85.5% PPM-10:  92.1%
+MIA-DAR         Grade: B   PPM-5:  85.5% PPM-10:  92.1%
+LIV-YRK         Grade: B   PPM-5:  78.7% PPM-10:  88.8%
+MCV-YRK         Grade: B   PPM-5:  78.7% PPM-10:  88.8%
+MIA-YRK         Grade: B   PPM-5:  78.7% PPM-10:  88.8%
+LIV-LDS         Grade: B   PPM-5:  77.0% PPM-10:  89.3%
+MAN-LDS         Grade: B   PPM-5:  77.0% PPM-10:  89.3%
+MIA-LDS         Grade: B   PPM-5:  77.0% PPM-10:  89.3%
+BHM-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+CNM-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+DAR-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+LDS-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+NCL-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+PLY-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+WOP-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+YRK-GLC         Grade: B   PPM-5:  80.8% PPM-10:  86.9%
+PAD-WSM         Grade: B   PPM-5:  78.0% PPM-10:  86.9%
+BRI-BHM         Grade: B   PPM-5:  75.6% PPM-10:  85.0%
+PGN-BHM         Grade: B   PPM-5:  75.6% PPM-10:  85.0%
+PLY-BHM         Grade: B   PPM-5:  75.6% PPM-10:  85.0%
+LIV-SCA         Grade: B   PPM-5:  77.9% PPM-10:  87.8%
+MAN-SCA         Grade: B   PPM-5:  77.9% PPM-10:  87.8%
+MCV-SCA         Grade: B   PPM-5:  77.9% PPM-10:  87.8%
+MIA-SCA         Grade: B   PPM-5:  77.9% PPM-10:  87.8%
+MCV-LDS         Grade: B   PPM-5:  76.3% PPM-10:  88.1%
+LIV-HUL         Grade: C   PPM-5:  74.2% PPM-10:  88.7%
+MCV-HUL         Grade: C   PPM-5:  74.2% PPM-10:  88.7%
+PGN-MAC         Grade: C   PPM-5:  71.2% PPM-10:  82.0%
+LIV-RCC         Grade: C   PPM-5:  71.5% PPM-10:  87.1%
+MAN-RCC         Grade: C   PPM-5:  71.5% PPM-10:  87.1%
+MCV-RCC         Grade: C   PPM-5:  71.5% PPM-10:  87.1%
+MIA-RCC         Grade: C   PPM-5:  71.5% PPM-10:  87.1%
+CTR-LDS         Grade: C   PPM-5:  74.8% PPM-10:  85.6%
+WBQ-LDS         Grade: C   PPM-5:  74.8% PPM-10:  85.6%
+WGN-LDS         Grade: C   PPM-5:  74.8% PPM-10:  85.6%
+WGW-LDS         Grade: C   PPM-5:  74.8% PPM-10:  85.6%
+CLE-LPY         Grade: C   PPM-5:  71.1% PPM-10:  85.2%
+PLY-DBY         Grade: C   PPM-5:  70.7% PPM-10:  81.1%
+PAD-BRI         Grade: C   PPM-5:  69.5% PPM-10:  82.8%
+PLY-ABD         Grade: C   PPM-5:  72.7% PPM-10:  81.8%
+PNZ-ABD         Grade: C   PPM-5:  72.7% PPM-10:  81.8%
+BGH-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+CLE-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+DON-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+HUD-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+HUL-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+MAN-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+NCL-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+RCC-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+SBY-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+SCA-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+SHF-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+SLB-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+SYB-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+YRK-LIV         Grade: C   PPM-5:  73.7% PPM-10:  83.1%
+LDS-LIV         Grade: C   PPM-5:  73.2% PPM-10:  83.2%
+MCV-LIV         Grade: C   PPM-5:  73.2% PPM-10:  83.2%
+MIA-LIV         Grade: C   PPM-5:  73.2% PPM-10:  83.2%
+EUS-LIV         Grade: C   PPM-5:  75.0% PPM-10:  75.0%
+HDG-LIV         Grade: C   PPM-5:  70.0% PPM-10:  83.7%
+WML-LIV         Grade: C   PPM-5:  70.0% PPM-10:  83.7%
+BRI-LDS         Grade: C   PPM-5:  67.0% PPM-10:  81.1%
+EXD-LDS         Grade: C   PPM-5:  67.0% PPM-10:  81.1%
+PLY-LDS         Grade: C   PPM-5:  67.0% PPM-10:  81.1%
+PNZ-LDS         Grade: C   PPM-5:  67.0% PPM-10:  81.1%
+MIA-MBR         Grade: C   PPM-5:  68.8% PPM-10:  83.1%
+PAD-BPW         Grade: C   PPM-5:  69.8% PPM-10:  75.5%
+EUS-BHM         Grade: C   PPM-5:  66.1% PPM-10:  80.2%
+KGX-INV         Grade: C   PPM-5:  75.8% PPM-10:  82.3%
+BRI-YRK         Grade: C   PPM-5:  65.3% PPM-10:  81.5%
+PLY-YRK         Grade: C   PPM-5:  65.3% PPM-10:  81.5%
+PAD-TAU         Grade: C   PPM-5:  65.7% PPM-10:  79.1%
+KGX-DEE         Grade: C   PPM-5:  71.3% PPM-10:  78.0%
+BAN-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+BHM-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+BMH-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+BRI-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+ESL-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+EXD-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+LMS-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+OXF-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+PGN-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+PLY-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+RDG-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+SOA-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+SOU-MAN         Grade: C   PPM-5:  59.0% PPM-10:  77.4%
+EUS-WVH         Grade: C   PPM-5:  69.0% PPM-10:  75.8%
+LIV-NCL         Grade: C   PPM-5:  65.2% PPM-10:  79.5%
+MAN-NCL         Grade: C   PPM-5:  65.2% PPM-10:  79.5%
+MCV-NCL         Grade: C   PPM-5:  65.2% PPM-10:  79.5%
+MIA-NCL         Grade: C   PPM-5:  65.2% PPM-10:  79.5%
+EUS-BHI         Grade: C   PPM-5:  63.3% PPM-10:  77.1%
+KGX-EDB         Grade: C   PPM-5:  68.7% PPM-10:  78.8%
+PAD-SWA         Grade: C   PPM-5:  59.6% PPM-10:  76.9%
+KGX-PTH         Grade: C   PPM-5:  70.0% PPM-10:  77.1%
+BRI-DEE         Grade: C   PPM-5:  64.6% PPM-10:  70.8%
+PLY-DEE         Grade: C   PPM-5:  64.6% PPM-10:  70.8%
+PNZ-DEE         Grade: C   PPM-5:  64.6% PPM-10:  70.8%
+KGX-ABD         Grade: C   PPM-5:  66.2% PPM-10:  78.1%
+EUS-BPN         Grade: C   PPM-5:  65.4% PPM-10:  76.9%
+KGX-STG         Grade: C   PPM-5:  70.3% PPM-10:  71.6%
+EUS-STA         Grade: D   PPM-5:  57.9% PPM-10:  72.4%
+EUS-PRE         Grade: D   PPM-5:  58.8% PPM-10:  71.0%
+PAD-EXD         Grade: D   PPM-5:  56.9% PPM-10:  68.8%
+EUS-CRE         Grade: D   PPM-5:  50.9% PPM-10:  67.9%
+BRI-NCL         Grade: D   PPM-5:  51.8% PPM-10:  65.0%
+PLY-NCL         Grade: D   PPM-5:  51.8% PPM-10:  65.0%
+PNZ-NCL         Grade: D   PPM-5:  51.8% PPM-10:  65.0%
+BRI-EDB         Grade: D   PPM-5:  53.9% PPM-10:  65.9%
+PLY-EDB         Grade: D   PPM-5:  53.9% PPM-10:  65.9%
+PNZ-EDB         Grade: D   PPM-5:  53.9% PPM-10:  65.9%
+EUS-EDB         Grade: D   PPM-5:  60.0% PPM-10:  67.7%
+LIV-SLB         Grade: D   PPM-5:  46.4% PPM-10:  72.2%
+MCV-SLB         Grade: D   PPM-5:  46.4% PPM-10:  72.2%
+MIA-SLB         Grade: D   PPM-5:  46.4% PPM-10:  72.2%
+EUS-GLC         Grade: D   PPM-5:  55.5% PPM-10:  65.5%
+NOT-LIV         Grade: D   PPM-5:  54.5% PPM-10:  74.8%
+NRW-LIV         Grade: D   PPM-5:  54.5% PPM-10:  74.8%
+PBO-LIV         Grade: D   PPM-5:  54.5% PPM-10:  74.8%
+BHI-MAN         Grade: D   PPM-5:  33.3% PPM-10:  66.7%
+PAD-CMN         Grade: F   PPM-5:  28.6% PPM-10:  71.4%
+PAD-PNZ         Grade: F   PPM-5:  43.1% PPM-10:  60.3%
+EUS-MAN         Grade: F   PPM-5:  35.0% PPM-10:  56.2%
+PAD-PLY         Grade: F   PPM-5:  40.6% PPM-10:  50.9%
+MIA-GLC         Grade: F   PPM-5:  50.0% PPM-10:  50.0%
+PAD-PAR         Grade: F   PPM-5:  23.8% PPM-10:  42.9%
+PAD-NQY         Grade: F   PPM-5:   0.0% PPM-10:   0.0%
+
+============================================================
+📊 Route Statistics: MYB-OXF
+============================================================
+
+📈 Performance Metrics:
+  Reliability Grade:    A (96.6/100)
+  On Time (≤1 min):     87.6%
+  PPM-5 (≤5 min):       96.2%
+  PPM-10 (≤10 min):     98.4%
+  Average Delay:        0.4 minutes
+  Cancellation Rate:    7.1%
+
+📊 Data Coverage:
+  Date Range:           2024-12-01 to 2025-10-28
+  Total Services:       2,214
+  Sample Size:          2,214
+  Data Quality:         100.0/100
+
+⏱️  Delay Distribution:
+  0-5 min:              1,219 (55.1%)
+  5-15 min:             65 (2.9%)
+  15-30 min:            14 (0.6%)
+  30-60 min:            2 (0.1%)
+  >60 min:              3 (0.1%)
+
+📅 Last Updated:        2025-11-16 21:24:42
+
+
+🏢 All TOCs (by reliability):
+------------------------------------------------------------
+SR       Grade: A   PPM-5:  96.1% Cancel:   8.8%
+CH       Grade: A   PPM-5:  93.8% Cancel:   9.5%
+LE       Grade: A   PPM-5:  92.2% Cancel:  11.4%
+LM       Grade: B   PPM-5:  81.7% Cancel:  14.0%
+AW       Grade: B   PPM-5:  79.8% Cancel:  22.9%
+NT       Grade: B   PPM-5:  78.6% Cancel:  26.5%
+TP       Grade: B   PPM-5:  77.3% Cancel:  22.8%
+XC       Grade: B   PPM-5:  75.1% Cancel:  16.6%
+GW       Grade: B   PPM-5:  72.6% Cancel:  20.3%
+GR       Grade: C   PPM-5:  71.7% Cancel:  32.3%
+EM       Grade: C   PPM-5:  73.8% Cancel:  48.1%
+LD       Grade: C   PPM-5:  63.4% Cancel:  33.4%
+VT       Grade: D   PPM-5:  54.3% Cancel:  30.4%
+
+
+💾 Cache Statistics:
+------------------------------------------------------------
+  Total Entries:        1
+  Valid Entries:        1
+  Expired Entries:      0
+  Avg Hits per Entry:   2.0

@@ -1,0 +1,10 @@
+{
+  "started_at": "2025-11-12T17:17:09.216649",
+  "last_updated": "2025-11-12T17:17:52.316971",
+  "completed_routes": [
+    "EUS-MAN"
+  ],
+  "failed_routes": [],
+  "total_records": 6,
+  "phase": "TEST"
+}

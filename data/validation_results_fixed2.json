@@ -1,0 +1,170 @@
+{
+  "summary": {
+    "metrics_records": 1355,
+    "details_records": 65753,
+    "unique_routes": 57,
+    "unique_services": 7906,
+    "date_range": {
+      "start": "2024-10-01",
+      "end": "2025-10-31"
+    },
+    "toc_count": 10,
+    "location_count": 236
+  },
+  "quality_checks": {
+    "completeness": {
+      "scheduled_departure": {
+        "non_null": 57391,
+        "total": 65753,
+        "percentage": 87.28
+      },
+      "scheduled_arrival": {
+        "non_null": 56316,
+        "total": 65753,
+        "percentage": 85.65
+      },
+      "actual_departure": {
+        "non_null": 54613,
+        "total": 65753,
+        "percentage": 83.06
+      },
+      "actual_arrival": {
+        "non_null": 53537,
+        "total": 65753,
+        "percentage": 81.42
+      },
+      "departure_delay_minutes": {
+        "non_null": 54605,
+        "total": 65753,
+        "percentage": 83.05
+      },
+      "arrival_delay_minutes": {
+        "non_null": 53537,
+        "total": 65753,
+        "percentage": 81.42
+      }
+    },
+    "consistency": {
+      "time_sequence_errors": 14,
+      "delay_calculation_errors": 0
+    },
+    "delay_quality": {
+      "total_records": 53537,
+      "mean_delay": 4.1,
+      "median_delay": 2,
+      "on_time_rate": 34.11,
+      "distribution": {
+        "on_time": 18261,
+        "slightly_late": 16413,
+        "late": 9702,
+        "very_late": 7472,
+        "early": 1689
+      }
+    },
+    "route_coverage": {
+      "EUS-MAN": 472,
+      "KGX-EDB": 116,
+      "PAD-BRI": 170,
+      "LST-NRW": 89,
+      "MYB-BHM": 0,
+      "MAN-LIV": 1,
+      "BHM-MAN": 21,
+      "BRI-BHM": 6,
+      "EDB-GLC": 0,
+      "MAN-LDS": 0
+    },
+    "temporal_distribution": {
+      "total_days": 138,
+      "missing_days": 258,
+      "avg_daily_records": 476.0,
+      "weekday_distribution": {
+        "Monday": 31392,
+        "Tuesday": 2718,
+        "Wednesday": 1622,
+        "Thursday": 1852,
+        "Friday": 2901,
+        "Saturday": 14738,
+        "Sunday": 10530
+      }
+    },
+    "toc_analysis": {
+      "VT": {
+        "services": 16400,
+        "avg_delay": 4.63,
+        "on_time_rate": 17.43
+      },
+      "GW": {
+        "services": 12842,
+        "avg_delay": 5.04,
+        "on_time_rate": 37.3
+      },
+      "XC": {
+        "services": 9851,
+        "avg_delay": 4.67,
+        "on_time_rate": 40.89
+      },
+      "LE": {
+        "services": 8012,
+        "avg_delay": 0.68,
+        "on_time_rate": 70.83
+      },
+      "GR": {
+        "services": 4264,
+        "avg_delay": 4.35,
+        "on_time_rate": 44.09
+      },
+      "NT": {
+        "services": 809,
+        "avg_delay": 4.73,
+        "on_time_rate": 20.4
+      },
+      "TP": {
+        "services": 588,
+        "avg_delay": 2.09,
+        "on_time_rate": 48.81
+      },
+      "EM": {
+        "services": 516,
+        "avg_delay": 3.91,
+        "on_time_rate": 35.08
+      },
+      "LD": {
+        "services": 213,
+        "avg_delay": 7.49,
+        "on_time_rate": 30.05
+      },
+      "AW": {
+        "services": 42,
+        "avg_delay": 0.9,
+        "on_time_rate": 52.38
+      }
+    },
+    "anomalies": [
+      "Extreme delays: 97"
+    ],
+    "freshness": {
+      "latest_fetch": "2025-11-13T22:36:35.217962",
+      "earliest_fetch": "2025-11-12 17:06:50.624772",
+      "age_hours": 0.0,
+      "collection_span_hours": 29.5
+    }
+  },
+  "warnings": [
+    "Potential cross-midnight date issues: 8 records",
+    "Extreme delays detected: 563 records",
+    "Low data routes: LST-NRW, MAN-LIV, BHM-MAN, BRI-BHM",
+    "Missing data for 258 days"
+  ],
+  "errors": [
+    "Time inconsistency: 14 records with departure < arrival",
+    "Missing routes: MYB-BHM, EDB-GLC, MAN-LDS"
+  ],
+  "recommendations": [
+    "\u274c Address critical errors before proceeding with modeling",
+    "\u26a0\ufe0f Review and address data quality warnings",
+    "\ud83d\udcca Consider collecting weekend data for better coverage",
+    "\ud83d\udd04 Implement incremental data updates for freshness",
+    "\ud83d\udcdd Add metadata collection for TOC and station information",
+    "\ud83c\udfaf Focus on high-traffic routes for initial predictions"
+  ]
+}

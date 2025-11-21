@@ -1,0 +1,123 @@
+🔍 RailFair Statistics Query Demo
+
+📊 All Routes (by reliability):
+------------------------------------------------------------
+BRI-ELY         Grade: A   PPM-5: 100.0% PPM-10: 100.0%
+BRI-CBG         Grade: A   PPM-5: 100.0% PPM-10: 100.0%
+BRI-SSD         Grade: A   PPM-5: 100.0% PPM-10: 100.0%
+EDB-GLC         Grade: A   PPM-5:  93.0% PPM-10:  97.3%
+LST-NRW         Grade: A   PPM-5:  92.7% PPM-10:  96.4%
+KGX-GLC         Grade: A   PPM-5: 100.0% PPM-10: 100.0%
+SNO-GLC         Grade: A   PPM-5: 100.0% PPM-10: 100.0%
+PAD-WSM         Grade: B   PPM-5:  77.3% PPM-10:  86.6%
+BRI-BHM         Grade: B   PPM-5:  73.3% PPM-10:  83.2%
+PGN-BHM         Grade: B   PPM-5:  73.3% PPM-10:  83.2%
+PLY-BHM         Grade: B   PPM-5:  73.3% PPM-10:  83.2%
+BHI-MAN         Grade: B   PPM-5:  50.0% PPM-10: 100.0%
+CLE-LPY         Grade: C   PPM-5:  71.1% PPM-10:  85.2%
+PAD-BRI         Grade: C   PPM-5:  68.5% PPM-10:  82.5%
+BHM-GLC         Grade: C   PPM-5:  76.9% PPM-10:  79.5%
+LDS-GLC         Grade: C   PPM-5:  76.9% PPM-10:  79.5%
+PLY-GLC         Grade: C   PPM-5:  76.9% PPM-10:  79.5%
+PLY-DBY         Grade: C   PPM-5:  67.4% PPM-10:  77.5%
+KGX-DEE         Grade: C   PPM-5:  74.3% PPM-10:  80.0%
+BRI-YRK         Grade: C   PPM-5:  66.2% PPM-10:  82.0%
+PLY-YRK         Grade: C   PPM-5:  66.2% PPM-10:  82.0%
+BRI-LDS         Grade: C   PPM-5:  64.6% PPM-10:  79.1%
+PLY-LDS         Grade: C   PPM-5:  64.6% PPM-10:  79.1%
+PNZ-LDS         Grade: C   PPM-5:  64.6% PPM-10:  79.1%
+KGX-INV         Grade: C   PPM-5:  73.0% PPM-10:  81.1%
+PAD-TAU         Grade: C   PPM-5:  66.7% PPM-10:  79.7%
+CLE-LIV         Grade: C   PPM-5:  63.6% PPM-10:  82.1%
+DON-LIV         Grade: C   PPM-5:  63.6% PPM-10:  82.1%
+HUL-LIV         Grade: C   PPM-5:  63.6% PPM-10:  82.1%
+MAN-LIV         Grade: C   PPM-5:  63.6% PPM-10:  82.1%
+NCL-LIV         Grade: C   PPM-5:  63.6% PPM-10:  82.1%
+SHF-LIV         Grade: C   PPM-5:  63.6% PPM-10:  82.1%
+MCV-LIV         Grade: C   PPM-5:  61.0% PPM-10:  80.1%
+MIA-LIV         Grade: C   PPM-5:  61.0% PPM-10:  80.1%
+KGX-PTH         Grade: C   PPM-5:  66.7% PPM-10:  75.6%
+BAN-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+BHM-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+BMH-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+BRI-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+ESL-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+LMS-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+PGN-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+PLY-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+RDG-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+SOA-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+SOU-MAN         Grade: C   PPM-5:  55.5% PPM-10:  73.6%
+KGX-STG         Grade: C   PPM-5:  69.4% PPM-10:  71.4%
+KGX-ABD         Grade: C   PPM-5:  65.0% PPM-10:  78.0%
+KGX-EDB         Grade: D   PPM-5:  65.0% PPM-10:  75.9%
+HDG-LIV         Grade: D   PPM-5:  58.1% PPM-10:  77.9%
+WML-LIV         Grade: D   PPM-5:  58.1% PPM-10:  77.9%
+PAD-EXD         Grade: D   PPM-5:  59.7% PPM-10:  69.8%
+PLY-NCL         Grade: D   PPM-5:  54.8% PPM-10:  66.5%
+BRI-EDB         Grade: D   PPM-5:  55.2% PPM-10:  67.1%
+PLY-EDB         Grade: D   PPM-5:  55.2% PPM-10:  67.1%
+PNZ-EDB         Grade: D   PPM-5:  55.2% PPM-10:  67.1%
+NOT-LIV         Grade: D   PPM-5:  54.5% PPM-10:  74.8%
+NRW-LIV         Grade: D   PPM-5:  54.5% PPM-10:  74.8%
+PBO-LIV         Grade: D   PPM-5:  54.5% PPM-10:  74.8%
+PAD-PLY         Grade: F   PPM-5:  39.8% PPM-10:  53.0%
+PLY-ABD         Grade: F   PPM-5:  40.0% PPM-10:  60.0%
+EUS-MAN         Grade: F   PPM-5:  31.3% PPM-10:  52.5%
+BRI-DEE         Grade: F   PPM-5:  36.4% PPM-10:  50.0%
+PLY-DEE         Grade: F   PPM-5:  36.4% PPM-10:  50.0%
+PNZ-DEE         Grade: F   PPM-5:  36.4% PPM-10:  50.0%
+PAD-PNZ         Grade: F   PPM-5:  34.7% PPM-10:  53.1%
+PAD-PAR         Grade: F   PPM-5:  23.8% PPM-10:  42.9%
+PAD-NQY         Grade: F   PPM-5:   0.0% PPM-10:   0.0%
+PAD-SWA         Grade: F   PPM-5:   0.0% PPM-10:   0.0%
+
+============================================================
+📊 Route Statistics: BRI-ELY
+============================================================
+
+📈 Performance Metrics:
+  Reliability Grade:    A (97.1/100)
+  On Time (≤1 min):     71.4%
+  PPM-5 (≤5 min):       100.0%
+  PPM-10 (≤10 min):     100.0%
+  Average Delay:        0.0 minutes
+  Cancellation Rate:    14.3%
+
+📊 Data Coverage:
+  Date Range:           2024-12-16 to 2025-01-27
+  Total Services:       7
+  Sample Size:          7
+  Data Quality:         100.0/100
+
+⏱️  Delay Distribution:
+  0-5 min:              3 (42.9%)
+  5-15 min:             0 (0.0%)
+  15-30 min:            0 (0.0%)
+  30-60 min:            0 (0.0%)
+  >60 min:              0 (0.0%)
+
+📅 Last Updated:        2025-11-14 12:23:14
+
+
+🏢 All TOCs (by reliability):
+------------------------------------------------------------
+SR       Grade: A   PPM-5:  95.4% Cancel:   9.5%
+AW       Grade: A   PPM-5:  95.0% Cancel:  15.0%
+LE       Grade: A   PPM-5:  91.4% Cancel:  12.6%
+TP       Grade: B   PPM-5:  80.7% Cancel:  21.5%
+XC       Grade: B   PPM-5:  74.3% Cancel:  17.6%
+GW       Grade: C   PPM-5:  72.1% Cancel:  21.6%
+EM       Grade: C   PPM-5:  73.8% Cancel:  48.1%
+GR       Grade: C   PPM-5:  69.5% Cancel:  33.9%
+NT       Grade: C   PPM-5:  61.3% Cancel:  30.6%
+LD       Grade: C   PPM-5:  60.5% Cancel:  34.0%
+VT       Grade: D   PPM-5:  46.8% Cancel:  30.8%
+
+
+💾 Cache Statistics:
+------------------------------------------------------------
+  Total Entries:        1
+  Valid Entries:        1
+  Expired Entries:      0
+  Avg Hits per Entry:   2.0

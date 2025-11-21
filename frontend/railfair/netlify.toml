@@ -1,0 +1,13 @@
+[build]
+  command = ""
+  publish = "."
+
+[[redirects]]
+  # ⚠️ 重要：请将下面的地址替换为你的 Cloudflare 后端地址
+  # 例如: 'https://railfair-api.your-domain.com' 或 'https://railfair-backend.workers.dev'
+  # 这样 Netlify 会将所有 /api/* 请求代理到你的后端
+  from = "/api/*"
+  to = "https://railfair-backend.example.com/api/:splat"
+  status = 200
+  force = true
+

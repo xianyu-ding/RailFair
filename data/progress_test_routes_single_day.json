@@ -1,0 +1,11 @@
+{
+  "started_at": null,
+  "last_updated": "2025-11-14T11:19:38.885910",
+  "completed_routes": [
+    "EUS-BHM",
+    "MCV-LDS"
+  ],
+  "failed_routes": [],
+  "total_records": 0,
+  "phase": "TEST_ROUTES_SINGLE_DAY"
+}

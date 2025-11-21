@@ -1,0 +1,23 @@
+{
+  "started_at": null,
+  "last_updated": "2025-11-16T03:08:40.084992",
+  "completed_routes": [
+    "EUS-MAN",
+    "KGX-EDR",
+    "PAD-BRI",
+    "LST-NRW",
+    "VIC-BHM",
+    "KGX-EDB",
+    "EUS-BHM",
+    "MCV-LIV",
+    "MYB-OXF",
+    "MYB-BMO",
+    "BHM-MAN",
+    "BRI-BHM",
+    "EDB-GLC",
+    "MCV-LDS"
+  ],
+  "failed_routes": [],
+  "total_records": 1953,
+  "phase": "PHASE3"
+}
