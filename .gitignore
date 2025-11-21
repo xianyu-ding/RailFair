@@ -91,3 +91,9 @@ docs/_build/
 *.tmp
 *.bak
 .cache/
+
+# Mac OS X hidden files
+._*
+.DS_Store
+.AppleDouble
+.LSOverride
