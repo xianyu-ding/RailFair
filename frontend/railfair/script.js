@@ -293,7 +293,7 @@ function renderResults(data) {
         // Clear previous results if error
         resultsList.innerHTML = `
             <div class="bg-white border border-slate-200 rounded-xl p-5 text-slate-600">
-                无法获取预测结果，请稍后重试。
+                Unable to fetch prediction results. Please try again later.
             </div>
         `;
         return;
@@ -436,7 +436,7 @@ function renderResults(data) {
                     </div>
                     <button id="${resultId}-toggle" class="mt-2 text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
                         <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                        <span>查看中间站台</span>
+                        <span>View intermediate stops</span>
                     </button>
                 </div>
 
@@ -487,7 +487,7 @@ function renderResults(data) {
             <div id="${resultId}-stops" class="hidden mt-4 pt-4 border-t border-slate-200">
                 <div class="flex items-center gap-2 mb-3">
                     <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
-                    <span class="text-sm font-semibold text-slate-700">中间站台</span>
+                    <span class="text-sm font-semibold text-slate-700">Intermediate Stops</span>
                 </div>
                 <div id="${resultId}-stops-content" class="text-sm text-slate-600">
                     <div class="flex items-center justify-center py-4">
@@ -567,12 +567,12 @@ function renderResults(data) {
                             stopsHtml += '</div>';
                             stopsContent.innerHTML = stopsHtml;
                         } else {
-                            stopsContent.innerHTML = '<p class="text-slate-500 text-center py-4">暂无中间站台数据</p>';
+                            stopsContent.innerHTML = '<p class="text-slate-500 text-center py-4">No intermediate stops data available</p>';
                         }
                         stopsLoaded = true;
                     } catch (error) {
                         console.error('Failed to load stops:', error);
-                        stopsContent.innerHTML = `<p class="text-red-500 text-center py-4">加载失败: ${error.message}</p>`;
+                        stopsContent.innerHTML = `<p class="text-red-500 text-center py-4">Failed to load: ${error.message}</p>`;
                     }
                     lucide.createIcons();
                 }
