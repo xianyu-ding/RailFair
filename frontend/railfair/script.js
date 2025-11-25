@@ -567,7 +567,8 @@ function renderResults(data) {
                             stopsHtml += '</div>';
                             stopsContent.innerHTML = stopsHtml;
                         } else {
-                            stopsContent.innerHTML = '<p class="text-slate-500 text-center py-4">No intermediate stops data available</p>';
+                            const message = stopsData.message || 'No intermediate stops data available';
+                            stopsContent.innerHTML = `<p class="text-slate-500 text-center py-4">${message}</p>`;
                         }
                         stopsLoaded = true;
                     } catch (error) {
