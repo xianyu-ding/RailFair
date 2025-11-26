@@ -10,6 +10,9 @@ const CANVAS_ID = 'rain-canvas';
 // State
 let stations = [];
 let animationFrameId;
+let currentTimetables = [];
+let currentPagination = null;
+let currentSearchParams = null;
 
 // DOM Elements
 const canvas = document.getElementById(CANVAS_ID);
@@ -226,14 +229,18 @@ searchForm.addEventListener('submit', async (e) => {
 
         const response = await fetch(`${API_URL}/api/predict`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 origin,
                 destination,
                 departure_date: date,
                 departure_time: time,
                 include_fares: true
-            })
+            }),
+            mode: 'cors', // Explicitly enable CORS
+            credentials: 'omit' // Don't send cookies
         });
 
         if (!response.ok) {
@@ -267,7 +274,7 @@ searchForm.addEventListener('submit', async (e) => {
         document.getElementById('route-date').textContent = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
         const payload = normalizeApiPayload(data);
-        renderResults(payload);
+        renderMultipleServices(payload, false);
 
     } catch (error) {
         console.error('Search error:', error);
@@ -288,7 +295,55 @@ searchForm.addEventListener('submit', async (e) => {
     }
 });
 
-function renderResults(data) {
+// State for pagination (remove duplicate declaration)
+// let currentTimetables = [];  // Already declared above
+let currentPagination = null;
+let currentSearchParams = null;
+
+// Function to render a single service
+function renderSingleService(timetable, prediction, fares, originCode, destCode, index) {
+    const departureDateTime = timetable.scheduled_departure ? new Date(timetable.scheduled_departure) : null;
+    const arrivalDateTime = timetable.scheduled_arrival ? new Date(timetable.scheduled_arrival) : null;
+    const durationMinutes = Number(timetable.duration_minutes);
+    
+    const scheduledDepartureLabel = formatTimeLabel(departureDateTime);
+    const scheduledArrivalLabel = formatTimeLabel(arrivalDateTime);
+    const durationLabel = formatDurationLabel(durationMinutes);
+    
+    const delaySource = prediction.expected_delay_minutes ?? prediction.predicted_delay_minutes;
+    const expectedDelayMinutes = Number.isFinite(Number(delaySource)) ? Number(delaySource) : null;
+    const predictedArrival = arrivalDateTime && expectedDelayMinutes !== null
+        ? new Date(arrivalDateTime.getTime() + expectedDelayMinutes * 60000)
+        : null;
+    const predictedArrivalLabel = formatTimeLabel(predictedArrival);
+    const delayLabel = formatDelayLabel(expectedDelayMinutes);
+    
+    const onTimeProbability = typeof prediction.on_time_probability === 'number' ? prediction.on_time_probability : 0;
+    const probabilityColor = onTimeProbability > 0.8 ? 'text-green-600' : (onTimeProbability > 0.6 ? 'text-yellow-600' : 'text-red-600');
+    const ringColor = onTimeProbability > 0.8 ? '#16a34a' : (onTimeProbability > 0.6 ? '#ca8a04' : '#dc2626');
+    const reliabilityLabel = onTimeProbability > 0.85 ? 'High' : (onTimeProbability > 0.6 ? 'Moderate' : 'Low');
+    const confidenceLabel = cleanConfidenceLabel(prediction.confidence || prediction.confidence_level);
+    const sampleSizeLabel = Number.isFinite(prediction.sample_size) ? prediction.sample_size.toLocaleString('en-GB') : 'N/A';
+    
+    const advanceLabel = formatCurrency(fares?.advance);
+    const offPeakLabel = formatCurrency(fares?.off_peak);
+    const anytimeLabel = formatCurrency(fares?.anytime);
+    
+    const cheapestTypeLabel = fares?.cheapest?.type ? fares.cheapest.type.replace(/_/g, ' ') : null;
+    const hasCheapestPrice = fares?.cheapest && fares.cheapest.price !== null && fares.cheapest.price !== undefined;
+    const cheapestPriceLabel = hasCheapestPrice ? formatCurrency(fares.cheapest.price) : null;
+    const cheapestSummary = hasCheapestPrice ? `${(cheapestTypeLabel || 'Cheapest').toUpperCase()} • ${cheapestPriceLabel}` : 'Cheapest fare: -';
+    
+    const hasSavingsAmount = fares?.cheapest && fares.cheapest.savings_amount !== null && fares.cheapest.savings_amount !== undefined;
+    const savingsSummary = hasSavingsAmount ? `Save ${formatCurrency(fares.cheapest.savings_amount)}${typeof fares.cheapest.savings_percentage === 'number' ? ` (${fares.cheapest.savings_percentage.toFixed(1)}%)` : ''}` : 'Savings: -';
+    const fareFootnote = fares ? `Source: ${fares.meta?.data_source || 'NRDP'}${fares.meta?.cache_age_hours ? ` • Cached ${fares.meta.cache_age_hours}h ago` : ''}` : 'No fare data for this route yet.';
+    
+    const resultId = `service-${Date.now()}-${index}`;
+    
+    const html = `
+        <div id="${resultId}" class="bg-white border border-slate-200 rounded-xl p-5 transition-all hover:border-blue-400 hover:shadow-md animate-fade-in mb-4">
+
+function renderResults(data, append = false) {
     if (!data || !data.prediction) {
         // Clear previous results if error
         resultsList.innerHTML = `
@@ -299,12 +354,30 @@ function renderResults(data) {
         return;
     }
     
-    // Don't clear previous results - allow multiple queries
-    // resultsList.innerHTML = ''; // Uncomment if you want to clear previous results
+    // If not appending, clear previous results and reset state
+    if (!append) {
+        resultsList.innerHTML = '';
+        currentTimetables = [];
+        currentPagination = null;
+    }
 
     const prediction = data.prediction;
     const fares = data.fares || null;
-    const timetable = data.timetable || null;
+    const timetables = data.timetables || (data.timetable ? [data.timetable] : []);
+    const timetable = data.timetable || timetables[0] || null;
+    const pagination = data.pagination || null;
+    
+    // Store state
+    currentTimetables = append ? [...currentTimetables, ...timetables] : timetables;
+    currentPagination = pagination;
+    if (!append) {
+        currentSearchParams = {
+            origin: document.getElementById('origin').value,
+            destination: document.getElementById('destination').value,
+            departure_date: document.getElementById('datetime').value.split('T')[0],
+            departure_time: document.getElementById('datetime').value.split('T')[1]
+        };
+    }
     const datetimeInput = document.getElementById('datetime').value;
     const fallbackDeparture = datetimeInput ? new Date(datetimeInput) : null;
 
@@ -403,6 +476,26 @@ function renderResults(data) {
 
     const originCode = document.getElementById('origin').value.toUpperCase();
     const destCode = document.getElementById('destination').value.toUpperCase();
+    
+    // Render each timetable service
+    if (timetables.length > 0) {
+        // Render multiple services
+        timetables.forEach((tt, index) => {
+            renderSingleService(tt, prediction, fares, originCode, destCode, index + (append ? currentTimetables.length - timetables.length : 0));
+        });
+        
+        // Add pagination buttons if needed
+        if (pagination && !append) {
+            addPaginationButtons(pagination);
+        } else if (pagination && append) {
+            updatePaginationButtons(pagination);
+        }
+        
+        lucide.createIcons();
+        return;
+    }
+    
+    // Fallback: render single service (backward compatibility) - only if no timetables array
     const resultId = `result-${Date.now()}`;
 
     const html = `
@@ -533,7 +626,10 @@ function renderResults(data) {
                 
                 if (!stopsLoaded) {
                     try {
-                        const response = await fetch(`${API_URL}/api/routes/${originCode}/${destCode}/stops`);
+                        const response = await fetch(`${API_URL}/api/routes/${originCode}/${destCode}/stops`, {
+                            mode: 'cors',
+                            credentials: 'omit'
+                        });
                         if (!response.ok) {
                             throw new Error(`HTTP ${response.status}`);
                         }
