@@ -805,6 +805,137 @@ function renderResults(data, append = false) {
     }, 100);
 }
 
+// --- Pagination Functions ---
+function addPaginationButtons(pagination) {
+    // Remove existing pagination buttons if any
+    const existingPagination = document.getElementById('pagination-buttons');
+    if (existingPagination) {
+        existingPagination.remove();
+    }
+    
+    const paginationHtml = `
+        <div id="pagination-buttons" class="flex flex-col gap-3 mt-6">
+            ${pagination.has_more_earlier ? `
+                <button id="load-earlier-btn" class="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                    <span>View Earlier Services</span>
+                </button>
+            ` : ''}
+            ${pagination.has_more_later ? `
+                <button id="load-later-btn" class="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium transition-colors flex items-center justify-center gap-2">
+                    <span>View Later Services</span>
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </button>
+            ` : ''}
+        </div>
+    `;
+    
+    const paginationDiv = document.createElement('div');
+    paginationDiv.innerHTML = paginationHtml;
+    resultsList.appendChild(paginationDiv);
+    
+    lucide.createIcons();
+    
+    // Add event listeners
+    setTimeout(() => {
+        const earlierBtn = document.getElementById('load-earlier-btn');
+        const laterBtn = document.getElementById('load-later-btn');
+        
+        if (earlierBtn) {
+            earlierBtn.addEventListener('click', async () => {
+                await loadMoreServices('earlier');
+            });
+        }
+        
+        if (laterBtn) {
+            laterBtn.addEventListener('click', async () => {
+                await loadMoreServices('later');
+            });
+        }
+    }, 100);
+}
+
+function updatePaginationButtons(pagination) {
+    const paginationDiv = document.getElementById('pagination-buttons');
+    if (!paginationDiv) {
+        addPaginationButtons(pagination);
+        return;
+    }
+    
+    // Update buttons based on pagination state
+    const earlierBtn = document.getElementById('load-earlier-btn');
+    const laterBtn = document.getElementById('load-later-btn');
+    
+    if (earlierBtn) {
+        earlierBtn.style.display = pagination.has_more_earlier ? 'flex' : 'none';
+    } else if (pagination.has_more_earlier) {
+        const btn = document.createElement('button');
+        btn.id = 'load-earlier-btn';
+        btn.className = 'w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium transition-colors flex items-center justify-center gap-2';
+        btn.innerHTML = '<i data-lucide="chevron-up" class="w-4 h-4"></i><span>View Earlier Services</span>';
+        btn.addEventListener('click', async () => await loadMoreServices('earlier'));
+        paginationDiv.insertBefore(btn, paginationDiv.firstChild);
+    }
+    
+    if (laterBtn) {
+        laterBtn.style.display = pagination.has_more_later ? 'flex' : 'none';
+    } else if (pagination.has_more_later) {
+        const btn = document.createElement('button');
+        btn.id = 'load-later-btn';
+        btn.className = 'w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-medium transition-colors flex items-center justify-center gap-2';
+        btn.innerHTML = '<span>View Later Services</span><i data-lucide="chevron-down" class="w-4 h-4"></i>';
+        btn.addEventListener('click', async () => await loadMoreServices('later'));
+        paginationDiv.appendChild(btn);
+    }
+    
+    lucide.createIcons();
+}
+
+async function loadMoreServices(direction) {
+    if (!currentSearchParams || !currentPagination) return;
+    
+    const { origin, destination, departure_date, departure_time } = currentSearchParams;
+    
+    // Calculate new time based on direction
+    const currentTime = new Date(`${departure_date}T${departure_time}:00`);
+    const timeOffset = direction === 'earlier' ? -2 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000; // ±2 hours
+    const newTime = new Date(currentTime.getTime() + timeOffset);
+    
+    const newDate = newTime.toISOString().split('T')[0];
+    const newTimeStr = newTime.toTimeString().split(':').slice(0, 2).join(':');
+    
+    try {
+        const response = await fetch(`${API_URL}/api/predict`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                origin,
+                destination,
+                departure_date: newDate,
+                departure_time: newTimeStr,
+                include_fares: true
+            }),
+            mode: 'cors',
+            credentials: 'omit'
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Request Failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const payload = normalizeApiPayload(data);
+        
+        // Append new results
+        renderResults(payload, true);
+    } catch (error) {
+        console.error('Failed to load more services:', error);
+        alert(`Failed to load ${direction} services: ${error.message}`);
+    }
+}
+
 // --- Initialization ---
 window.addEventListener('DOMContentLoaded', async () => {
     initAnimation();
