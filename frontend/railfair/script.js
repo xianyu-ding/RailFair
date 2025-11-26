@@ -305,7 +305,7 @@ searchForm.addEventListener('submit', async (e) => {
         document.getElementById('route-date').textContent = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
         const payload = normalizeApiPayload(data);
-        renderMultipleServices(payload, false);
+        renderResults(payload, false);
 
     } catch (error) {
         console.error('Search error:', error);
