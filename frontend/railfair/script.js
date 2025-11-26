@@ -103,41 +103,72 @@ function animate() {
 async function loadStations() {
     try {
         const response = await fetch('stations.json');
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         const data = await response.json();
-        stations = data.StationList;
+        stations = data.StationList || data.stations || [];
+        console.log('Loaded stations:', stations.length);
     } catch (error) {
         console.error('Failed to load stations:', error);
+        // Fallback to a more comprehensive list
         stations = [
             { crs: 'EUS', Value: 'London Euston' },
-            { crs: 'MAN', Value: 'Manchester Piccadilly' }
+            { crs: 'MAN', Value: 'Manchester Piccadilly' },
+            { crs: 'KGX', Value: 'London Kings Cross' },
+            { crs: 'PAD', Value: 'London Paddington' },
+            { crs: 'BRI', Value: 'Bristol Temple Meads' },
+            { crs: 'BHM', Value: 'Birmingham New Street' },
+            { crs: 'LIV', Value: 'Liverpool Lime Street' },
+            { crs: 'LDS', Value: 'Leeds' },
+            { crs: 'NCL', Value: 'Newcastle' },
+            { crs: 'EDB', Value: 'Edinburgh Waverley' },
+            { crs: 'GLC', Value: 'Glasgow Central' }
         ];
+        console.log('Using fallback stations:', stations.length);
     }
 }
 
 function setupAutocomplete(inputId, suggestionsId) {
     const input = document.getElementById(inputId);
     const suggestions = document.getElementById(suggestionsId);
+    
+    if (!input || !suggestions) {
+        console.error(`Autocomplete setup failed: input=${inputId}, suggestions=${suggestionsId}`);
+        return;
+    }
 
     input.addEventListener('input', () => {
-        const query = input.value.toLowerCase();
-        if (query.length < 2) {
+        const query = input.value.trim().toLowerCase();
+        console.log('Autocomplete input:', query, 'stations count:', stations.length);
+        
+        if (query.length < 1) {
             suggestions.classList.add('hidden');
             return;
         }
 
-        const matches = stations.filter(s =>
-            s.Value.toLowerCase().includes(query) ||
-            s.crs.toLowerCase().includes(query)
-        ).slice(0, 8);
+        if (!stations || stations.length === 0) {
+            console.warn('No stations loaded yet');
+            suggestions.classList.add('hidden');
+            return;
+        }
+
+        const matches = stations.filter(s => {
+            const valueMatch = s.Value && s.Value.toLowerCase().includes(query);
+            const crsMatch = s.crs && s.crs.toLowerCase().includes(query);
+            return valueMatch || crsMatch;
+        }).slice(0, 8);
+
+        console.log('Autocomplete matches:', matches.length);
 
         suggestions.innerHTML = '';
         if (matches.length > 0) {
             matches.forEach(s => {
                 const div = document.createElement('div');
                 div.className = 'px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 border-b border-slate-50 last:border-0';
-                div.textContent = `${s.Value} (${s.crs})`;
+                div.textContent = `${s.Value || s.name || ''} (${s.crs || ''})`;
                 div.onclick = () => {
-                    input.value = s.crs;
+                    input.value = (s.crs || '').toUpperCase();
                     suggestions.classList.add('hidden');
                 };
                 suggestions.appendChild(div);
@@ -686,9 +717,13 @@ function renderResults(data, append = false) {
 }
 
 // --- Initialization ---
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     initAnimation();
-    loadStations();
+    
+    // Load stations first, then setup autocomplete
+    await loadStations();
+    console.log('Stations loaded, setting up autocomplete...');
+    
     setupAutocomplete('origin', 'origin-suggestions');
     setupAutocomplete('destination', 'destination-suggestions');
 
@@ -696,4 +731,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('datetime').value = now.toISOString().slice(0, 16);
+    
+    console.log('Initialization complete');
 });
