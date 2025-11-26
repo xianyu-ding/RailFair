@@ -326,10 +326,8 @@ searchForm.addEventListener('submit', async (e) => {
     }
 });
 
-// State for pagination (remove duplicate declaration)
-// let currentTimetables = [];  // Already declared above
-let currentPagination = null;
-let currentSearchParams = null;
+// State for pagination (already declared above at line 13-15)
+// No need to redeclare - these variables are already defined in the State section
 
 // Function to render a single service
 function renderSingleService(timetable, prediction, fares, originCode, destCode, index) {
