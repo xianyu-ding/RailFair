@@ -371,6 +371,97 @@ function renderSingleService(timetable, prediction, fares, originCode, destCode,
     
     const html = `
         <div id="${resultId}" class="bg-white border border-slate-200 rounded-xl p-5 transition-all hover:border-blue-400 hover:shadow-md animate-fade-in mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                
+                <!-- Timetable -->
+                <div class="md:col-span-5 flex flex-col gap-4">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Scheduled timetable</span>
+                        <div class="flex items-center gap-3 text-2xl font-bold text-slate-900 mt-1">
+                            <span>${scheduledDepartureLabel}</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-slate-300"></i>
+                            <span>${scheduledArrivalLabel}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                            ${durationLabel ? `Duration ${durationLabel}` : 'Duration: -'}
+                            ${timetable?.service_frequency ? ` • ${timetable.service_frequency}` : ''}
+                        </p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 px-3 py-2 flex flex-col gap-1 text-sm text-slate-600">
+                        <div class="flex items-center justify-between">
+                            <span>Predicted arrival</span>
+                            <span class="text-base font-semibold text-slate-900">${predictedArrivalLabel}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <span>Expected delay ${delayLabel}</span>
+                            <span class="text-slate-300">•</span>
+                            <span>Confidence ${confidenceLabel}</span>
+                        </div>
+                    </div>
+                    <button id="${resultId}-toggle" class="mt-2 text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                        <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                        <span>View intermediate stops</span>
+                    </button>
+                </div>
+
+                <div class="md:col-span-3 flex flex-col gap-3 border-l-0 md:border-l border-slate-100 md:pl-6">
+                    <div class="flex items-center gap-4">
+                        <div class="relative flex items-center justify-center w-12 h-12">
+                            <svg class="transform -rotate-90 w-12 h-12">
+                                <circle class="text-slate-100" stroke-width="3" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24"></circle>
+                                <circle style="stroke: ${ringColor}; stroke-dasharray: ${2 * Math.PI * 20}; stroke-dashoffset: ${2 * Math.PI * 20 * (1 - onTimeProbability)}"
+                                    stroke-width="3" stroke-linecap="round" fill="transparent" r="20" cx="24" cy="24"></circle>
+                            </svg>
+                            <span class="absolute text-[10px] font-bold text-slate-700">${(onTimeProbability * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">On-time chance</span>
+                            <span class="text-sm font-bold ${probabilityColor}">${reliabilityLabel}</span>
+                            <span class="text-xs text-slate-500">Sample size ${sampleSizeLabel}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-4 flex flex-col gap-4">
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Advance</span>
+                            <span class="text-xl font-bold text-slate-900">${advanceLabel}</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Off-Peak</span>
+                            <span class="text-xl font-bold text-slate-900">${offPeakLabel}</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Anytime</span>
+                            <span class="text-xl font-bold text-slate-900">${anytimeLabel}</span>
+                        </div>
+                    </div>
+                    <div class="rounded-lg border border-slate-100 px-4 py-3 bg-slate-50/70">
+                        <p class="text-sm font-semibold text-slate-900">${cheapestSummary}</p>
+                        <p class="text-xs text-slate-500 mt-1">${savingsSummary}</p>
+                    </div>
+                    <p class="text-xs text-slate-400">${fareFootnote}</p>
+                </div>
+
+            </div>
+            <div id="${resultId}-stops" class="hidden mt-4 pt-4 border-t border-slate-200">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                    <span class="text-sm font-semibold text-slate-700">Intermediate Stops</span>
+                </div>
+                <div id="${resultId}-stops-content" class="text-sm text-slate-600">
+                    <div class="flex items-center justify-center py-4">
+                        <div class="w-5 h-5 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                        <span class="ml-2 text-slate-500">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    return html;
+}
 
 function renderResults(data, append = false) {
     if (!data || !data.prediction) {
