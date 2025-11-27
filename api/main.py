@@ -29,9 +29,22 @@ from enum import Enum
 import logging
 import time
 import hashlib
+import hashlib
 import json
+import sqlite3
 from collections import defaultdict
+
 from threading import Lock
+import os
+import sys
+from pathlib import Path
+
+# Add parent directory to path to allow imports from sibling modules
+sys.path.append(str(Path(__file__).parent.parent))
+
+from predictor import predict_delay, DelayPrediction as RealDelayPrediction
+from price_fetcher import initialize_fares_system, FareComparator, TicketType
+
 
 # Configure logging
 logging.basicConfig(
@@ -332,6 +345,7 @@ class PredictionResponse(BaseModel):
     departure_datetime: str = Field(..., description="ISO format datetime")
     prediction: DelayPrediction
     fares: Optional[FareComparison] = None
+    timetable: Optional[Dict[str, Any]] = None
     recommendations: List[Recommendation] = Field(
         default_factory=list,
         description="Travel recommendations"
@@ -556,6 +570,7 @@ class AppState:
         self.predictor = None
         self.fare_cache = None
         self.fare_comparator = None
+        self.db_path = os.getenv("RAILFAIR_DB_PATH", "data/railfair.db")
     
     @property
     def uptime(self) -> float:
@@ -652,6 +667,87 @@ def categorize_delay(delay_minutes: int, was_cancelled: bool = False) -> DelayCa
         return DelayCategory.SEVERE
     else:
         return DelayCategory.VERY_SEVERE
+
+
+def get_timetable_data(db_path: str, origin: str, destination: str, departure_datetime: datetime) -> Optional[Dict[str, Any]]:
+    """Get timetable metadata for a route"""
+    query = """
+        SELECT 
+            rm.origin_crs,
+            rm.destination_crs,
+            rm.typical_duration_minutes,
+            rm.service_frequency,
+            rm.route_type,
+            rm.priority_tier,
+            rm.notes,
+            rm.updated_at AS metadata_updated_at,
+            stats.avg_delay_minutes,
+            stats.on_time_percentage,
+            stats.total_services,
+            stats.calculation_date
+        FROM route_metadata rm
+        LEFT JOIN (
+            SELECT 
+                origin, 
+                destination, 
+                avg_delay_minutes, 
+                on_time_percentage, 
+                total_services,
+                calculation_date
+            FROM route_statistics
+            WHERE origin = ? AND destination = ?
+            ORDER BY calculation_date DESC
+            LIMIT 1
+        ) stats
+        ON rm.origin_crs = stats.origin AND rm.destination_crs = stats.destination
+        WHERE rm.origin_crs = ? AND rm.destination_crs = ?
+        ORDER BY rm.updated_at DESC
+        LIMIT 1
+    """
+    
+    try:
+        with sqlite3.connect(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(query, (origin, destination, origin, destination))
+            row = cursor.fetchone()
+            
+            if not row:
+                return None
+            
+            # Build payload
+            record = dict(row)
+            duration = record.get("typical_duration_minutes")
+            scheduled_arrival = None
+            if duration is not None:
+                try:
+                    duration_value = float(duration)
+                    scheduled_arrival = (departure_datetime + timedelta(minutes=duration_value)).isoformat()
+                except (TypeError, ValueError):
+                    scheduled_arrival = None
+            
+            return {
+                "origin": record.get("origin_crs"),
+                "destination": record.get("destination_crs"),
+                "scheduled_departure": departure_datetime.isoformat(),
+                "scheduled_arrival": scheduled_arrival,
+                "duration_minutes": duration,
+                "service_frequency": record.get("service_frequency"),
+                "route_type": record.get("route_type"),
+                "priority_tier": record.get("priority_tier"),
+                "notes": record.get("notes"),
+                "data_source": "route_metadata",
+                "metadata_updated_at": record.get("metadata_updated_at"),
+                "stats": {
+                    "on_time_percentage": record.get("on_time_percentage"),
+                    "avg_delay_minutes": record.get("avg_delay_minutes"),
+                    "total_services": record.get("total_services"),
+                    "last_calculated_at": record.get("calculation_date")
+                }
+            }
+    except Exception as e:
+        logger.error(f"Error fetching timetable data: {e}")
+        return None
 
 
 # ============================================================================
@@ -758,46 +854,77 @@ async def predict_delay(
             "%Y-%m-%d %H:%M"
         )
         
-        # TODO: Integrate with actual predictor
-        # For MVP, return simulated prediction
+        # Use real predictor
+        logger.info(f"Predicting delay for {request.origin} -> {request.destination} at {departure_datetime}")
+        
+        # Call the real predictor
+        # Note: predict_delay returns a PredictionResult object from predictor.py
+        # We need to map it to the DelayPrediction model used in the API
+        real_prediction = predict_delay(
+            app_state.db_path,
+            request.origin,
+            request.destination,
+            departure_datetime
+        )
+        
+        # Map to API model
         prediction = DelayPrediction(
-            predicted_delay_minutes=12,
-            confidence=0.75,
-            delay_category=categorize_delay(12),
-            on_time_probability=0.65,
-            historical_data_points=150
+            predicted_delay_minutes=int(real_prediction.expected_delay_minutes),
+            confidence=0.8 if real_prediction.confidence.name == "HIGH" else (0.6 if real_prediction.confidence.name == "MEDIUM" else 0.4),
+            delay_category=categorize_delay(int(real_prediction.expected_delay_minutes)),
+            on_time_probability=real_prediction.on_time_probability,
+            historical_data_points=real_prediction.sample_size
         )
         
         # Get fare comparison if requested
         fares = None
-        if request.include_fares:
-            # TODO: Integrate with actual fare cache
-            fares = FareComparison(
-                advance=FareInfo(
-                    ticket_type=TicketTypeEnum.ADVANCE,
-                    price=25.50,
-                    restrictions="Must travel on booked train",
-                    valid_routes=["00000"]
-                ),
-                off_peak=FareInfo(
-                    ticket_type=TicketTypeEnum.OFF_PEAK,
-                    price=45.00,
-                    restrictions="Valid off-peak times only",
-                    valid_routes=["00000"]
-                ),
-                anytime=FareInfo(
-                    ticket_type=TicketTypeEnum.ANYTIME,
-                    price=89.00,
-                    restrictions="No restrictions",
-                    valid_routes=["00000"]
-                ),
-                cheapest_type=TicketTypeEnum.ADVANCE,
-                cheapest_price=25.50,
-                savings_amount=63.50,
-                savings_percentage=71.35,
-                data_source="Simulated",
-                last_updated=datetime.now().isoformat()
-            )
+        if request.include_fares and app_state.fare_comparator:
+            logger.info("Fetching real fare data...")
+            try:
+                # Use the real fare comparator
+                real_fares = app_state.fare_comparator.compare_fares(
+                    request.origin,
+                    request.destination,
+                    departure_datetime
+                )
+                
+                if real_fares:
+                    # Map real fares to API model
+                    # Helper to create FareInfo from price
+                    def create_fare_info(price, ticket_type, restrictions=""):
+                        if price is None:
+                            return None
+                        return FareInfo(
+                            ticket_type=ticket_type,
+                            price=price / 100.0,  # Convert pence to pounds
+                            restrictions=restrictions,
+                            valid_routes=["ANY"]
+                        )
+                    
+                    fares = FareComparison(
+                        advance=create_fare_info(real_fares.advance_price, TicketTypeEnum.ADVANCE, "Advance Purchase"),
+                        off_peak=create_fare_info(real_fares.off_peak_price, TicketTypeEnum.OFF_PEAK, "Off-Peak Only"),
+                        anytime=create_fare_info(real_fares.anytime_price, TicketTypeEnum.ANYTIME, "Anytime"),
+                        cheapest_type=TicketTypeEnum(real_fares.cheapest_type.value) if real_fares.cheapest_type else None,
+                        cheapest_price=real_fares.cheapest_price / 100.0 if real_fares.cheapest_price else None,
+                        savings_amount=real_fares.savings_amount / 100.0 if real_fares.savings_amount else 0.0,
+                        savings_percentage=real_fares.savings_percentage,
+                        data_source=real_fares.data_source,
+                        last_updated=datetime.now().isoformat()
+                    )
+                else:
+                    logger.warning("No fare data found for this route")
+            except Exception as e:
+                logger.error(f"Error fetching fares: {e}")
+                # Fallback to None or keep fares as None
+        
+        # Get timetable data
+        timetable = get_timetable_data(
+            app_state.db_path,
+            request.origin,
+            request.destination,
+            departure_datetime
+        )
         
         # Generate recommendations
         recommendations = _generate_recommendations(prediction, fares)
@@ -812,6 +939,7 @@ async def predict_delay(
             departure_datetime=departure_datetime.isoformat(),
             prediction=prediction,
             fares=fares,
+            timetable=timetable,
             recommendations=recommendations,
             metadata={
                 "processing_time_ms": round(processing_time, 2),
@@ -969,11 +1097,20 @@ async def startup_event():
     """Initialize services on startup"""
     logger.info("Starting RailFair API...")
     
-    # TODO: Initialize predictor
-    # app_state.predictor = DelayPredictor("railfair.db")
-    
-    # TODO: Initialize fare cache
-    # app_state.fare_cache = FareCache("railfair_fares.db")
+    # Initialize fare system
+    try:
+        logger.info(f"Initializing fare system with DB: {app_state.db_path}")
+        # Note: This requires .env to be loaded with NRDP credentials
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        cache, comparator = initialize_fares_system(app_state.db_path)
+        app_state.fare_cache = cache
+        app_state.fare_comparator = comparator
+        logger.info("✅ Fare system initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize fare system: {e}")
+        logger.warning("Fare comparison will be unavailable")
     
     logger.info("RailFair API started successfully")
 
