@@ -681,10 +681,39 @@ def get_timetables_for_date(db_path: str, origin: str, destination: str, departu
                 nrdp_data = json.load(f)
             
             # Filter services for this route
-            matching_services = [
-                s for s in nrdp_data.get('services', [])
-                if s.get('origin_location') == origin and s.get('destination_location') == destination
-            ]
+            matching_services = []
+            for s in nrdp_data.get('services', []):
+                if s.get('origin_location') != origin or s.get('destination_location') != destination:
+                    continue
+                
+                # Check date validity
+                svc_start = s.get('start_date')
+                svc_end = s.get('end_date')
+                if svc_start:
+                    try:
+                        svc_start_date = datetime.strptime(svc_start, '%Y-%m-%d').date()
+                        if departure_datetime.date() < svc_start_date:
+                            continue
+                    except ValueError:
+                        pass
+                
+                if svc_end:
+                    try:
+                        svc_end_date = datetime.strptime(svc_end, '%Y-%m-%d').date()
+                        if departure_datetime.date() > svc_end_date:
+                            continue
+                    except ValueError:
+                        pass
+                
+                # Check day of week
+                days_run = s.get('days_run', [])
+                if days_run:
+                    day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                    query_day = day_names[departure_datetime.weekday()]
+                    if query_day not in days_run:
+                        continue
+                
+                matching_services.append(s)
             
             if matching_services:
                 logger.info(f"Found {len(matching_services)} services from NRDP timetable for {origin}->{destination}")
@@ -862,25 +891,27 @@ def generate_fallback_timetables(db_path: str, origin: str, destination: str, da
             # Determine interval based on frequency string
             interval_minutes = 60
             if "2-3" in frequency_str or "30" in frequency_str:
-                interval_minutes = 20
+                interval_minutes = 30  # Changed from 20
             elif "2" in frequency_str or "half" in frequency_str:
                 interval_minutes = 30
             elif "15" in frequency_str:
                 interval_minutes = 15
+            elif "hour" in frequency_str.lower():
+                interval_minutes = 60
                 
-            # Generate services from 06:00 to 23:00
-            start_hour = 6
+            # Generate services from 05:00 to 23:59
+            start_hour = 5
             end_hour = 23
+            end_minute = 59
             
             current_time = date.replace(hour=start_hour, minute=0, second=0, microsecond=0)
-            end_time = date.replace(hour=end_hour, minute=0, second=0, microsecond=0)
+            end_time = date.replace(hour=end_hour, minute=end_minute, second=0, microsecond=0)
             
             service_id_counter = 1000
             
             while current_time <= end_time:
-                # Add some random variation to departure time (0-5 mins)
-                # For consistent results, we use a fixed pattern based on hour
-                variation = (current_time.hour * 7) % 5
+                # Add variation to departure time for realism
+                variation = ((current_time.hour * 7 + current_time.minute // 10) * 3) % 7
                 actual_dep = current_time + timedelta(minutes=variation)
                 
                 actual_arr = actual_dep + timedelta(minutes=duration)
