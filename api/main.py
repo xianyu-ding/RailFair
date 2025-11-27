@@ -682,13 +682,28 @@ def get_timetables_for_date(db_path: str, origin: str, destination: str, departu
             
             # Filter services for this route
             matching_services = []
+            
+            # Minimum date threshold: only services valid after October 2025
+            min_threshold_date = datetime(2025, 10, 1).date()
+            
             for s in nrdp_data.get('services', []):
                 if s.get('origin_location') != origin or s.get('destination_location') != destination:
                     continue
                 
-                # Check date validity
+                # Check date validity - service must be valid after Oct 2025
                 svc_start = s.get('start_date')
                 svc_end = s.get('end_date')
+                
+                # Skip if service ends before October 2025
+                if svc_end:
+                    try:
+                        svc_end_date = datetime.strptime(svc_end, '%Y-%m-%d').date()
+                        if svc_end_date < min_threshold_date:
+                            continue
+                    except ValueError:
+                        pass
+                
+                # Check if service is valid for the queried date
                 if svc_start:
                     try:
                         svc_start_date = datetime.strptime(svc_start, '%Y-%m-%d').date()
