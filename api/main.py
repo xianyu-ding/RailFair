@@ -671,6 +671,75 @@ def categorize_delay(delay_minutes: int, was_cancelled: bool = False) -> DelayCa
 
 def get_timetables_for_date(db_path: str, origin: str, destination: str, departure_datetime: datetime) -> List[Dict[str, Any]]:
     """Get all services for a route on a specific date"""
+    timetables = []
+    
+    # First, try to load from NRDP timetable JSON cache
+    nrdp_timetable_path = Path(db_path).parent / "timetable_parsed.json"
+    if nrdp_timetable_path.exists():
+        try:
+            with open(nrdp_timetable_path, 'r', encoding='utf-8') as f:
+                nrdp_data = json.load(f)
+            
+            # Filter services for this route
+            matching_services = [
+                s for s in nrdp_data.get('services', [])
+                if s.get('origin_location') == origin and s.get('destination_location') == destination
+            ]
+            
+            if matching_services:
+                logger.info(f"Found {len(matching_services)} services from NRDP timetable for {origin}->{destination}")
+                
+                # Convert NRDP services to our API format
+                for nrdp_service in matching_services:
+                    # Parse times
+                    origin_time_str = nrdp_service.get('origin_time')
+                    dest_time_str = nrdp_service.get('destination_time')
+                    
+                    if not origin_time_str or not dest_time_str:
+                        continue
+                    
+                    # Parse time strings (HH:MM:SS format)
+                    try:
+                        parts = origin_time_str.split(':')
+                        origin_time = time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
+                        
+                        parts = dest_time_str.split(':')
+                        dest_time = time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
+                    except (ValueError, IndexError):
+                        continue
+                    
+                    # Construct full datetime
+                    dep_dt = datetime.combine(departure_datetime.date(), origin_time)
+                    arr_dt = datetime.combine(departure_datetime.date(), dest_time)
+                    
+                    # Handle crossing midnight
+                    if arr_dt < dep_dt:
+                        arr_dt += timedelta(days=1)
+                    
+                    # Calculate duration
+                    duration = int((arr_dt - dep_dt).total_seconds() / 60)
+                    
+                    timetables.append({
+                        "service_id": nrdp_service.get('train_uid', 'unknown'),
+                        "origin": origin,
+                        "destination": destination,
+                        "scheduled_departure": dep_dt.isoformat(),
+                        "scheduled_arrival": arr_dt.isoformat(),
+                        "duration_minutes": duration,
+                        "service_frequency": "",
+                        "route_type": nrdp_service.get('train_category', 'unknown'),
+                        "stats": {
+                            "on_time_percentage": None,
+                            "avg_delay_minutes": None
+                        }
+                    })
+                
+                if timetables:
+                    return sorted(timetables, key=lambda x: x['scheduled_departure'])
+        except Exception as e:
+            logger.error(f"Error loading NRDP timetable data: {e}")
+    
+    # If no NRDP data, try database services table
     query = """
         SELECT 
             s.service_id,
