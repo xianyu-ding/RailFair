@@ -346,8 +346,8 @@ class OptimizedQueries:
                            toc: str = None) -> Dict[str, Any]:
         """Get optimized prediction data from route_statistics"""
         # Use route_statistics table which contains pre-calculated statistics
-            query = """
-                SELECT 
+        query = """
+            SELECT 
                 on_time_percentage / 100.0 as on_time_rate,
                 avg_delay_minutes as avg_delay,
                 total_services as sample_size,
@@ -358,10 +358,14 @@ class OptimizedQueries:
             ORDER BY calculation_date DESC
             LIMIT 1
             """
-            params = {"origin": origin, "destination": destination}
+        params = {"origin": origin, "destination": destination}
         
-        results = pool.execute_query(query, params)
-        return results[0] if results else {}
+        try:
+            results = pool.execute_query(query, params)
+            return results[0] if results else {}
+        except Exception as e:
+            logger.error(f"Error fetching prediction data for {origin}-{destination}: {e}")
+            return {}
     
     @staticmethod
     def get_popular_routes(pool: DatabasePool, limit: int = 10) -> List[Dict]:
