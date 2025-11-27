@@ -132,7 +132,7 @@ async function loadStations() {
 function setupAutocomplete(inputId, suggestionsId) {
     const input = document.getElementById(inputId);
     const suggestions = document.getElementById(suggestionsId);
-    
+
     if (!input || !suggestions) {
         console.error(`Autocomplete setup failed: input=${inputId}, suggestions=${suggestionsId}`);
         return;
@@ -141,7 +141,7 @@ function setupAutocomplete(inputId, suggestionsId) {
     input.addEventListener('input', () => {
         const query = input.value.trim().toLowerCase();
         console.log('Autocomplete input:', query, 'stations count:', stations.length);
-        
+
         if (query.length < 1) {
             suggestions.classList.add('hidden');
             return;
@@ -260,7 +260,7 @@ searchForm.addEventListener('submit', async (e) => {
 
         const response = await fetch(`${API_URL}/api/predict`, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -300,7 +300,7 @@ searchForm.addEventListener('submit', async (e) => {
         // Update Header (only if this is the first result, or clear previous results)
         // Option: Clear previous results on new search
         resultsList.innerHTML = '';  // Clear previous results for new search
-        
+
         document.getElementById('route-title').innerHTML = `${origin} <span class="text-slate-400 px-2">→</span> ${destination}`;
         document.getElementById('route-date').textContent = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -311,7 +311,7 @@ searchForm.addEventListener('submit', async (e) => {
         console.error('Search error:', error);
         console.error('API_URL:', API_URL);
         console.error('API_BASE:', API_BASE);
-        
+
         // Show more detailed error message
         let errorMessage = 'Search failed. ';
         if (error.message) {
@@ -334,11 +334,11 @@ function renderSingleService(timetable, prediction, fares, originCode, destCode,
     const departureDateTime = timetable.scheduled_departure ? new Date(timetable.scheduled_departure) : null;
     const arrivalDateTime = timetable.scheduled_arrival ? new Date(timetable.scheduled_arrival) : null;
     const durationMinutes = Number(timetable.duration_minutes);
-    
+
     const scheduledDepartureLabel = formatTimeLabel(departureDateTime);
     const scheduledArrivalLabel = formatTimeLabel(arrivalDateTime);
     const durationLabel = formatDurationLabel(durationMinutes);
-    
+
     const delaySource = prediction.expected_delay_minutes ?? prediction.predicted_delay_minutes;
     const expectedDelayMinutes = Number.isFinite(Number(delaySource)) ? Number(delaySource) : null;
     const predictedArrival = arrivalDateTime && expectedDelayMinutes !== null
@@ -346,29 +346,29 @@ function renderSingleService(timetable, prediction, fares, originCode, destCode,
         : null;
     const predictedArrivalLabel = formatTimeLabel(predictedArrival);
     const delayLabel = formatDelayLabel(expectedDelayMinutes);
-    
+
     const onTimeProbability = typeof prediction.on_time_probability === 'number' ? prediction.on_time_probability : 0;
     const probabilityColor = onTimeProbability > 0.8 ? 'text-green-600' : (onTimeProbability > 0.6 ? 'text-yellow-600' : 'text-red-600');
     const ringColor = onTimeProbability > 0.8 ? '#16a34a' : (onTimeProbability > 0.6 ? '#ca8a04' : '#dc2626');
     const reliabilityLabel = onTimeProbability > 0.85 ? 'High' : (onTimeProbability > 0.6 ? 'Moderate' : 'Low');
     const confidenceLabel = cleanConfidenceLabel(prediction.confidence || prediction.confidence_level);
     const sampleSizeLabel = Number.isFinite(prediction.sample_size) ? prediction.sample_size.toLocaleString('en-GB') : 'N/A';
-    
+
     const advanceLabel = formatCurrency(fares?.advance);
     const offPeakLabel = formatCurrency(fares?.off_peak);
     const anytimeLabel = formatCurrency(fares?.anytime);
-    
+
     const cheapestTypeLabel = fares?.cheapest?.type ? fares.cheapest.type.replace(/_/g, ' ') : null;
     const hasCheapestPrice = fares?.cheapest && fares.cheapest.price !== null && fares.cheapest.price !== undefined;
     const cheapestPriceLabel = hasCheapestPrice ? formatCurrency(fares.cheapest.price) : null;
     const cheapestSummary = hasCheapestPrice ? `${(cheapestTypeLabel || 'Cheapest').toUpperCase()} • ${cheapestPriceLabel}` : 'Cheapest fare: -';
-    
+
     const hasSavingsAmount = fares?.cheapest && fares.cheapest.savings_amount !== null && fares.cheapest.savings_amount !== undefined;
     const savingsSummary = hasSavingsAmount ? `Save ${formatCurrency(fares.cheapest.savings_amount)}${typeof fares.cheapest.savings_percentage === 'number' ? ` (${fares.cheapest.savings_percentage.toFixed(1)}%)` : ''}` : 'Savings: -';
     const fareFootnote = fares ? `Source: ${fares.meta?.data_source || 'NRDP'}${fares.meta?.cache_age_hours ? ` • Cached ${fares.meta.cache_age_hours}h ago` : ''}` : 'No fare data for this route yet.';
-    
+
     const resultId = `service-${Date.now()}-${index}`;
-    
+
     const html = `
         <div id="${resultId}" class="bg-white border border-slate-200 rounded-xl p-5 transition-all hover:border-blue-400 hover:shadow-md animate-fade-in mb-4">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
@@ -473,7 +473,7 @@ function renderResults(data, append = false) {
         `;
         return;
     }
-    
+
     // If not appending, clear previous results and reset state
     if (!append) {
         resultsList.innerHTML = '';
@@ -486,7 +486,7 @@ function renderResults(data, append = false) {
     const timetables = data.timetables || (data.timetable ? [data.timetable] : []);
     const timetable = data.timetable || timetables[0] || null;
     const pagination = data.pagination || null;
-    
+
     // Store state
     currentTimetables = append ? [...currentTimetables, ...timetables] : timetables;
     currentPagination = pagination;
@@ -596,25 +596,28 @@ function renderResults(data, append = false) {
 
     const originCode = document.getElementById('origin').value.toUpperCase();
     const destCode = document.getElementById('destination').value.toUpperCase();
-    
+
     // Render each timetable service
     if (timetables.length > 0) {
         // Render multiple services
         timetables.forEach((tt, index) => {
-            renderSingleService(tt, prediction, fares, originCode, destCode, index + (append ? currentTimetables.length - timetables.length : 0));
+            const html = renderSingleService(tt, prediction, fares, originCode, destCode, index + (append ? currentTimetables.length - timetables.length : 0));
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            resultsList.appendChild(div);
         });
-        
+
         // Add pagination buttons if needed
         if (pagination && !append) {
             addPaginationButtons(pagination);
         } else if (pagination && append) {
             updatePaginationButtons(pagination);
         }
-        
+
         lucide.createIcons();
         return;
     }
-    
+
     // Fallback: render single service (backward compatibility) - only if no timetables array
     const resultId = `result-${Date.now()}`;
 
@@ -716,7 +719,7 @@ function renderResults(data, append = false) {
     const resultDiv = document.createElement('div');
     resultDiv.innerHTML = html;
     resultsList.appendChild(resultDiv);
-    
+
     // Re-initialize lucide icons for the new content
     lucide.createIcons();
 
@@ -725,25 +728,25 @@ function renderResults(data, append = false) {
         const toggleBtn = document.getElementById(`${resultId}-toggle`);
         const stopsDiv = document.getElementById(`${resultId}-stops`);
         const stopsContent = document.getElementById(`${resultId}-stops-content`);
-        
+
         if (!toggleBtn || !stopsDiv || !stopsContent) {
             console.error('Failed to find toggle elements:', { toggleBtn, stopsDiv, stopsContent });
             return;
         }
-        
+
         let stopsLoaded = false;
 
         toggleBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             if (stopsDiv.classList.contains('hidden')) {
                 stopsDiv.classList.remove('hidden');
                 const icon = toggleBtn.querySelector('i');
                 if (icon) {
                     icon.setAttribute('data-lucide', 'chevron-up');
                 }
-                
+
                 if (!stopsLoaded) {
                     try {
                         const response = await fetch(`${API_URL}/api/routes/${originCode}/${destCode}/stops`, {
@@ -754,21 +757,21 @@ function renderResults(data, append = false) {
                             throw new Error(`HTTP ${response.status}`);
                         }
                         const stopsData = await response.json();
-                        
+
                         if (stopsData.stops && stopsData.stops.length > 0) {
                             let stopsHtml = '<div class="space-y-2">';
                             stopsData.stops.forEach((stop, index) => {
-                                const depTime = stop.scheduled_departure 
-                                    ? formatTimeLabel(stop.scheduled_departure) 
+                                const depTime = stop.scheduled_departure
+                                    ? formatTimeLabel(stop.scheduled_departure)
                                     : '-';
-                                const arrTime = stop.scheduled_arrival 
-                                    ? formatTimeLabel(stop.scheduled_arrival) 
+                                const arrTime = stop.scheduled_arrival
+                                    ? formatTimeLabel(stop.scheduled_arrival)
                                     : '-';
                                 const timeDisplay = depTime !== '-' ? depTime : (arrTime !== '-' ? arrTime : '-');
-                                
+
                                 const isOrigin = stop.is_origin === true || index === 0;
                                 const isDest = stop.is_destination === true || index === stopsData.stops.length - 1;
-                                
+
                                 stopsHtml += `
                                     <div class="flex items-center gap-3 py-2 px-3 rounded-lg ${isOrigin || isDest ? 'bg-blue-50' : 'bg-slate-50'}">
                                         <div class="flex-shrink-0 w-16 text-xs font-mono text-slate-500">${timeDisplay}</div>
@@ -812,7 +815,7 @@ function addPaginationButtons(pagination) {
     if (existingPagination) {
         existingPagination.remove();
     }
-    
+
     const paginationHtml = `
         <div id="pagination-buttons" class="flex flex-col gap-3 mt-6">
             ${pagination.has_more_earlier ? `
@@ -829,24 +832,24 @@ function addPaginationButtons(pagination) {
             ` : ''}
         </div>
     `;
-    
+
     const paginationDiv = document.createElement('div');
     paginationDiv.innerHTML = paginationHtml;
     resultsList.appendChild(paginationDiv);
-    
+
     lucide.createIcons();
-    
+
     // Add event listeners
     setTimeout(() => {
         const earlierBtn = document.getElementById('load-earlier-btn');
         const laterBtn = document.getElementById('load-later-btn');
-        
+
         if (earlierBtn) {
             earlierBtn.addEventListener('click', async () => {
                 await loadMoreServices('earlier');
             });
         }
-        
+
         if (laterBtn) {
             laterBtn.addEventListener('click', async () => {
                 await loadMoreServices('later');
@@ -861,11 +864,11 @@ function updatePaginationButtons(pagination) {
         addPaginationButtons(pagination);
         return;
     }
-    
+
     // Update buttons based on pagination state
     const earlierBtn = document.getElementById('load-earlier-btn');
     const laterBtn = document.getElementById('load-later-btn');
-    
+
     if (earlierBtn) {
         earlierBtn.style.display = pagination.has_more_earlier ? 'flex' : 'none';
     } else if (pagination.has_more_earlier) {
@@ -876,7 +879,7 @@ function updatePaginationButtons(pagination) {
         btn.addEventListener('click', async () => await loadMoreServices('earlier'));
         paginationDiv.insertBefore(btn, paginationDiv.firstChild);
     }
-    
+
     if (laterBtn) {
         laterBtn.style.display = pagination.has_more_later ? 'flex' : 'none';
     } else if (pagination.has_more_later) {
@@ -887,27 +890,27 @@ function updatePaginationButtons(pagination) {
         btn.addEventListener('click', async () => await loadMoreServices('later'));
         paginationDiv.appendChild(btn);
     }
-    
+
     lucide.createIcons();
 }
 
 async function loadMoreServices(direction) {
     if (!currentSearchParams || !currentPagination) return;
-    
+
     const { origin, destination, departure_date, departure_time } = currentSearchParams;
-    
+
     // Calculate new time based on direction
     const currentTime = new Date(`${departure_date}T${departure_time}:00`);
     const timeOffset = direction === 'earlier' ? -2 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000; // ±2 hours
     const newTime = new Date(currentTime.getTime() + timeOffset);
-    
+
     const newDate = newTime.toISOString().split('T')[0];
     const newTimeStr = newTime.toTimeString().split(':').slice(0, 2).join(':');
-    
+
     try {
         const response = await fetch(`${API_URL}/api/predict`, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -924,10 +927,10 @@ async function loadMoreServices(direction) {
         if (!response.ok) {
             throw new Error(`API Request Failed: ${response.status}`);
         }
-        
+
         const data = await response.json();
         const payload = normalizeApiPayload(data);
-        
+
         // Append new results
         renderResults(payload, true);
     } catch (error) {
@@ -939,11 +942,11 @@ async function loadMoreServices(direction) {
 // --- Initialization ---
 window.addEventListener('DOMContentLoaded', async () => {
     initAnimation();
-    
+
     // Load stations first, then setup autocomplete
     await loadStations();
     console.log('Stations loaded, setting up autocomplete...');
-    
+
     setupAutocomplete('origin', 'origin-suggestions');
     setupAutocomplete('destination', 'destination-suggestions');
 
@@ -951,6 +954,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('datetime').value = now.toISOString().slice(0, 16);
-    
+
     console.log('Initialization complete');
 });

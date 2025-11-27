@@ -155,9 +155,32 @@ function setupAutocomplete(inputId, suggestionsId) {
 }
 
 function normalizeApiPayload(response) {
+    // Handle different response formats:
+    // 1. { data: { prediction: {...} } } - wrapped format
+    // 2. { prediction: {...} } - direct format (from Worker)
+    // 3. { ok: true, received: {...} } - debug/test format
+    
     if (response && response.data && response.data.prediction) {
         return response.data;
     }
+    
+    // If prediction is directly in response, return as-is
+    if (response && response.prediction) {
+        return response;
+    }
+    
+    // If we have a "received" field (debug format), try to extract prediction from it
+    if (response && response.received) {
+        const received = response.received;
+        if (received.prediction) {
+            return received;
+        }
+        // If received is the prediction itself, wrap it
+        if (received.on_time_probability !== undefined || received.expected_delay_minutes !== undefined) {
+            return { prediction: received };
+        }
+    }
+    
     return response;
 }
 
@@ -213,11 +236,21 @@ function formatDelayLabel(minutes) {
 searchForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const origin = document.getElementById('origin').value;
-    const destination = document.getElementById('destination').value;
+    const origin = document.getElementById('origin').value.trim().toUpperCase();
+    const destination = document.getElementById('destination').value.trim().toUpperCase();
     const datetime = document.getElementById('datetime').value;
 
-    if (!origin || !destination || !datetime) return;
+    if (!origin || !destination || !datetime) {
+        console.warn('Missing required fields:', { origin, destination, datetime });
+        return;
+    }
+
+    // Validate datetime format
+    if (!datetime.includes('T')) {
+        console.error('Invalid datetime format:', datetime);
+        alert('Please select a valid date and time.');
+        return;
+    }
 
     // UI Transition
     searchBtn.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>';
@@ -225,21 +258,41 @@ searchForm.addEventListener('submit', async (e) => {
 
     try {
         const [date, time] = datetime.split('T');
+        
+        if (!date || !time) {
+            throw new Error('Invalid datetime format: missing date or time');
+        }
+
+        const requestBody = {
+            origin,
+            destination,
+            departure_date: date,
+            departure_time: time,
+            include_fares: true
+        };
+
+        console.log('Sending POST request:', { url: `${API_URL}/predict`, body: requestBody });
 
         const response = await fetch(`${API_URL}/predict`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                origin,
-                destination,
-                departure_date: date,
-                departure_time: time,
-                include_fares: true
-            })
+            headers: { 
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) throw new Error('API Request Failed');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API request failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorText
+            });
+            throw new Error(`API Request Failed: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('API response received:', data);
 
         // Transition to results view
         heroText.style.opacity = '0';
@@ -260,8 +313,9 @@ searchForm.addEventListener('submit', async (e) => {
         renderResults(payload);
 
     } catch (error) {
-        console.error(error);
-        alert('Search failed. Please ensure the backend is running.');
+        console.error('Search error:', error);
+        console.error('Error stack:', error.stack);
+        alert(`Search failed: ${error.message}\n\nCheck browser console for details.`);
     } finally {
         searchBtn.innerHTML = '<i data-lucide="search" class="w-5 h-5"></i>';
         searchBtn.disabled = false;
@@ -270,16 +324,31 @@ searchForm.addEventListener('submit', async (e) => {
 });
 
 function renderResults(data) {
-    if (!data || !data.prediction) {
+    // Log the received data for debugging
+    console.log('renderResults called with data:', data);
+    
+    // Check if prediction exists in various possible locations
+    let prediction = null;
+    if (data && data.prediction) {
+        prediction = data.prediction;
+    } else if (data && (data.on_time_probability !== undefined || data.expected_delay_minutes !== undefined)) {
+        // If data itself is the prediction object
+        prediction = data;
+    }
+    
+    if (!prediction) {
+        console.error('No prediction found in data:', data);
         resultsList.innerHTML = `
             <div class="bg-white border border-slate-200 rounded-xl p-5 text-slate-600">
-                无法获取预测结果，请稍后重试。
+                <p class="font-semibold mb-2">无法获取预测结果</p>
+                <p class="text-sm text-slate-500">请检查后端服务是否正常运行，或稍后重试。</p>
+                <pre class="mt-4 text-xs bg-slate-50 p-3 rounded overflow-auto">${JSON.stringify(data, null, 2)}</pre>
             </div>
         `;
         return;
     }
 
-    const prediction = data.prediction;
+    // Use the extracted prediction
     const fares = data.fares || null;
     const timetable = data.timetable || null;
     const datetimeInput = document.getElementById('datetime').value;
