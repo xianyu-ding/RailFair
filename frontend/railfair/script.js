@@ -7,12 +7,23 @@ const API_URL = 'https://api.railfair.uk';  // 直接硬编码，不使用任何
 console.log('🔧 API Configuration:', { API_BASE, API_URL });
 const CANVAS_ID = 'rain-canvas';
 
+/** Only show trains whose departure is within this many minutes of the search (or “load more”) anchors. */
+const NEARBY_WINDOW_MINUTES = 120;
+
 // State
 let stations = [];
 let animationFrameId;
 let currentTimetables = [];
 let currentPagination = null;
 let currentSearchParams = null;
+
+let sessionAllTimetables = [];
+let originalSearchAnchor = null;
+let extraAnchorWindows = [];
+let latestPredictionForCards = null;
+let latestFaresForCards = null;
+let latestPagination = null;
+let showAllServicesToday = false;
 
 // DOM Elements
 const canvas = document.getElementById(CANVAS_ID);
@@ -241,6 +252,101 @@ function formatDelayLabel(minutes) {
     return `${Math.round(Number(minutes))}m`;
 }
 
+function dedupeAndSortTimetables(list) {
+    const seen = new Set();
+    const out = [];
+    for (const t of list) {
+        const key = `${t.service_id}|${t.scheduled_departure}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(t);
+    }
+    out.sort((a, b) => {
+        const da = new Date(a.scheduled_departure).getTime();
+        const db = new Date(b.scheduled_departure).getTime();
+        return da - db;
+    });
+    return out;
+}
+
+function minutesFromAnchor(timetable, anchorDate) {
+    if (!timetable?.scheduled_departure || !anchorDate || Number.isNaN(anchorDate.getTime())) {
+        return Infinity;
+    }
+    const dep = new Date(timetable.scheduled_departure);
+    if (Number.isNaN(dep.getTime())) return Infinity;
+    return Math.abs(dep.getTime() - anchorDate.getTime()) / 60000;
+}
+
+function getDisplayTimetables() {
+    if (showAllServicesToday || !originalSearchAnchor || Number.isNaN(originalSearchAnchor.getTime())) {
+        return [...sessionAllTimetables];
+    }
+    return sessionAllTimetables.filter((t) => {
+        if (minutesFromAnchor(t, originalSearchAnchor) <= NEARBY_WINDOW_MINUTES) return true;
+        return extraAnchorWindows.some(
+            (a) => a && !Number.isNaN(a.getTime()) && minutesFromAnchor(t, a) <= NEARBY_WINDOW_MINUTES
+        );
+    });
+}
+
+function updateScheduleFilterHint() {
+    const el = document.getElementById('schedule-filter-hint');
+    const btn = document.getElementById('toggle-schedule-scope');
+    if (!el || !btn) return;
+    const total = sessionAllTimetables.length;
+    const shown = getDisplayTimetables().length;
+    if (total === 0) {
+        el.textContent = '';
+        btn.classList.add('hidden');
+        return;
+    }
+    btn.classList.remove('hidden');
+    if (showAllServicesToday) {
+        el.textContent = `Showing all ${total} service${total === 1 ? '' : 's'} for this route on this date.`;
+        btn.textContent = `Show only ±${NEARBY_WINDOW_MINUTES} min`;
+    } else {
+        el.textContent = `Showing ${shown} near your search time (±${NEARBY_WINDOW_MINUTES} min per window; ${total} loaded).`;
+        btn.textContent = 'Show all services today';
+    }
+}
+
+function redrawTimetableCards() {
+    const prediction = latestPredictionForCards;
+    const fares = latestFaresForCards;
+    const pagination = latestPagination;
+    if (!prediction || sessionAllTimetables.length === 0) return;
+
+    const displayList = getDisplayTimetables();
+    const originCode = document.getElementById('origin').value.toUpperCase();
+    const destCode = document.getElementById('destination').value.toUpperCase();
+
+    resultsList.innerHTML = '';
+    updateScheduleFilterHint();
+
+    if (displayList.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'bg-white border border-amber-200 rounded-xl p-5 text-slate-700 mb-4';
+        empty.innerHTML = `
+            <p class="font-medium text-slate-900">No trains in the current time windows</p>
+            <p class="text-sm text-slate-600 mt-2">Try <strong>Show all services today</strong>, use &ldquo;Earlier / Later services&rdquo;, or change the departure time.</p>`;
+        resultsList.appendChild(empty);
+        if (pagination) addPaginationButtons(pagination);
+        lucide.createIcons();
+        return;
+    }
+
+    displayList.forEach((tt, index) => {
+        const html = renderSingleService(tt, prediction, fares, originCode, destCode, index);
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        resultsList.appendChild(div);
+    });
+
+    if (pagination) addPaginationButtons(pagination);
+    lucide.createIcons();
+}
+
 // --- Search Logic ---
 searchForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -305,7 +411,8 @@ searchForm.addEventListener('submit', async (e) => {
         document.getElementById('route-date').textContent = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
         const payload = normalizeApiPayload(data);
-        renderResults(payload, false);
+        const anchorDate = new Date(`${date}T${time}`);
+        renderResults(payload, false, { anchorDate });
 
     } catch (error) {
         console.error('Search error:', error);
@@ -369,6 +476,17 @@ function renderSingleService(timetable, prediction, fares, originCode, destCode,
 
     const resultId = `service-${Date.now()}-${index}`;
 
+    const serviceMetaParts = [];
+    if (timetable?.service_id != null && timetable.service_id !== '') {
+        serviceMetaParts.push(`ID ${timetable.service_id}`);
+    }
+    if (timetable?.route_type) {
+        serviceMetaParts.push(String(timetable.route_type));
+    }
+    const serviceMetaLine = serviceMetaParts.length
+        ? `<p class="text-[11px] text-slate-400 mt-1 font-mono">${serviceMetaParts.join(' · ')}</p>`
+        : '';
+
     const html = `
         <div id="${resultId}" class="bg-white border border-slate-200 rounded-xl p-5 transition-all hover:border-blue-400 hover:shadow-md animate-fade-in mb-4">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
@@ -386,6 +504,7 @@ function renderSingleService(timetable, prediction, fares, originCode, destCode,
                             ${durationLabel ? `Duration ${durationLabel}` : 'Duration: -'}
                             ${timetable?.service_frequency ? ` • ${timetable.service_frequency}` : ''}
                         </p>
+                        ${serviceMetaLine}
                     </div>
                     <div class="rounded-lg bg-slate-50 px-3 py-2 flex flex-col gap-1 text-sm text-slate-600">
                         <div class="flex items-center justify-between">
@@ -463,7 +582,7 @@ function renderSingleService(timetable, prediction, fares, originCode, destCode,
     return html;
 }
 
-function renderResults(data, append = false) {
+function renderResults(data, append = false, options = {}) {
     if (!data || !data.prediction) {
         // Clear previous results if error
         resultsList.innerHTML = `
@@ -474,11 +593,14 @@ function renderResults(data, append = false) {
         return;
     }
 
-    // If not appending, clear previous results and reset state
     if (!append) {
         resultsList.innerHTML = '';
         currentTimetables = [];
         currentPagination = null;
+        sessionAllTimetables = [];
+        extraAnchorWindows = [];
+        showAllServicesToday = false;
+        originalSearchAnchor = null;
     }
 
     const prediction = data.prediction;
@@ -487,9 +609,8 @@ function renderResults(data, append = false) {
     const timetable = data.timetable || timetables[0] || null;
     const pagination = data.pagination || null;
 
-    // Store state
-    currentTimetables = append ? [...currentTimetables, ...timetables] : timetables;
-    currentPagination = pagination;
+    const datetimeInput = document.getElementById('datetime').value;
+
     if (!append) {
         currentSearchParams = {
             origin: document.getElementById('origin').value,
@@ -497,8 +618,34 @@ function renderResults(data, append = false) {
             departure_date: document.getElementById('datetime').value.split('T')[0],
             departure_time: document.getElementById('datetime').value.split('T')[1]
         };
+        originalSearchAnchor = options.anchorDate
+            || (datetimeInput ? new Date(datetimeInput) : null);
     }
-    const datetimeInput = document.getElementById('datetime').value;
+    if (append && options.anchorDate && !Number.isNaN(options.anchorDate.getTime())) {
+        extraAnchorWindows.push(options.anchorDate);
+    }
+
+    currentPagination = pagination;
+
+    if (timetables.length > 0) {
+        if (!append) {
+            sessionAllTimetables = dedupeAndSortTimetables(timetables);
+        } else {
+            sessionAllTimetables = dedupeAndSortTimetables([...sessionAllTimetables, ...timetables]);
+        }
+        currentTimetables = sessionAllTimetables;
+        latestPredictionForCards = prediction;
+        latestFaresForCards = fares;
+        latestPagination = pagination;
+        redrawTimetableCards();
+        return;
+    }
+
+    const hintEl = document.getElementById('schedule-filter-hint');
+    const scopeBtn = document.getElementById('toggle-schedule-scope');
+    if (hintEl) hintEl.textContent = '';
+    if (scopeBtn) scopeBtn.classList.add('hidden');
+
     const fallbackDeparture = datetimeInput ? new Date(datetimeInput) : null;
 
     const durationMinutes = Number(timetable?.duration_minutes);
@@ -596,27 +743,6 @@ function renderResults(data, append = false) {
 
     const originCode = document.getElementById('origin').value.toUpperCase();
     const destCode = document.getElementById('destination').value.toUpperCase();
-
-    // Render each timetable service
-    if (timetables.length > 0) {
-        // Render multiple services
-        timetables.forEach((tt, index) => {
-            const html = renderSingleService(tt, prediction, fares, originCode, destCode, index + (append ? currentTimetables.length - timetables.length : 0));
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            resultsList.appendChild(div);
-        });
-
-        // Add pagination buttons if needed
-        if (pagination && !append) {
-            addPaginationButtons(pagination);
-        } else if (pagination && append) {
-            updatePaginationButtons(pagination);
-        }
-
-        lucide.createIcons();
-        return;
-    }
 
     // Fallback: render single service (backward compatibility) - only if no timetables array
     const resultId = `result-${Date.now()}`;
@@ -931,8 +1057,8 @@ async function loadMoreServices(direction) {
         const data = await response.json();
         const payload = normalizeApiPayload(data);
 
-        // Append new results
-        renderResults(payload, true);
+        // Append new results (anchor = time used for this request so ±2h window includes new batch)
+        renderResults(payload, true, { anchorDate: newTime });
     } catch (error) {
         console.error('Failed to load more services:', error);
         alert(`Failed to load ${direction} services: ${error.message}`);
@@ -954,6 +1080,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('datetime').value = now.toISOString().slice(0, 16);
+
+    document.getElementById('toggle-schedule-scope')?.addEventListener('click', () => {
+        if (sessionAllTimetables.length === 0) return;
+        showAllServicesToday = !showAllServicesToday;
+        redrawTimetableCards();
+    });
 
     console.log('Initialization complete');
 });
