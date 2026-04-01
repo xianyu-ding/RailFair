@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, Dict, List, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time as dt_time
 from enum import Enum
 import logging
 import time
@@ -44,6 +44,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from predictor import predict_delay, DelayPrediction as RealDelayPrediction
 from price_fetcher import initialize_fares_system, FareComparator, TicketType
+from api.crs_tiploc import location_codes_for_query
 
 
 # Configure logging
@@ -672,9 +673,12 @@ def categorize_delay(delay_minutes: int, was_cancelled: bool = False) -> DelayCa
 def get_timetables_for_date(db_path: str, origin: str, destination: str, departure_datetime: datetime) -> List[Dict[str, Any]]:
     """Get all services for a route on a specific date"""
     timetables = []
+    data_dir = Path(db_path).parent
+    origin_codes = set(location_codes_for_query(origin, data_dir))
+    dest_codes = set(location_codes_for_query(destination, data_dir))
     
     # First, try to load from NRDP timetable JSON cache
-    nrdp_timetable_path = Path(db_path).parent / "timetable_parsed.json"
+    nrdp_timetable_path = data_dir / "timetable_parsed.json"
     if nrdp_timetable_path.exists():
         try:
             with open(nrdp_timetable_path, 'r', encoding='utf-8') as f:
@@ -687,7 +691,7 @@ def get_timetables_for_date(db_path: str, origin: str, destination: str, departu
             min_threshold_date = datetime(2025, 10, 1).date()
             
             for s in nrdp_data.get('services', []):
-                if s.get('origin_location') != origin or s.get('destination_location') != destination:
+                if s.get('origin_location') not in origin_codes or s.get('destination_location') not in dest_codes:
                     continue
                 
                 # Check date validity - service must be valid after Oct 2025
@@ -745,10 +749,10 @@ def get_timetables_for_date(db_path: str, origin: str, destination: str, departu
                     # Parse time strings (HH:MM:SS format)
                     try:
                         parts = origin_time_str.split(':')
-                        origin_time = time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
+                        origin_time = dt_time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
                         
                         parts = dest_time_str.split(':')
-                        dest_time = time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
+                        dest_time = dt_time(int(parts[0]), int(parts[1]), int(parts[2]) if len(parts) > 2 else 0)
                     except (ValueError, IndexError):
                         continue
                     

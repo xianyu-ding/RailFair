@@ -1,0 +1,3 @@
+{
+  "_readme": "Optional overrides for api/crs_tiploc.py. Keys are 3-letter CRS; values are arrays of NRDP timetable location codes (uppercase). Example: {\"LST\": [\"LEICESTR\"]} if you add a verified TIPLOC."
+}

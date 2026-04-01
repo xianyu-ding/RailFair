@@ -59,6 +59,7 @@ from api.db_pool import (
     OptimizedQueries,
     close_db_pool
 )
+from api.crs_tiploc import location_codes_for_query
 
 # Import existing modules
 from predictor import (
@@ -235,9 +236,12 @@ def get_cached_route_stats(origin: str, destination: str) -> Dict[str, Any]:
 def get_timetables_for_date(origin: str, destination: str, departure_datetime: datetime) -> List[Dict[str, Any]]:
     """Get all services for a route on a specific date - with NRDP data and fallback"""
     timetables = []
+    data_dir = Path(DB_PATH).parent
+    origin_codes = set(location_codes_for_query(origin, data_dir))
+    dest_codes = set(location_codes_for_query(destination, data_dir))
     
     # First, try to load from NRDP timetable JSON cache  
-    nrdp_timetable_path = Path(DB_PATH).parent / "timetable_parsed.json"
+    nrdp_timetable_path = data_dir / "timetable_parsed.json"
     if nrdp_timetable_path.exists():
         try:
             with open(nrdp_timetable_path, 'r', encoding='utf-8') as f:
@@ -250,7 +254,7 @@ def get_timetables_for_date(origin: str, destination: str, departure_datetime: d
             min_threshold_date = datetime(2025, 10, 1).date()
             
             for s in nrdp_data.get('services', []):
-                if s.get('origin_location') != origin or s.get('destination_location') != destination:
+                if s.get('origin_location') not in origin_codes or s.get('destination_location') not in dest_codes:
                     continue
                 
                 # Check date validity - service must be valid after Oct 2025
@@ -809,9 +813,12 @@ async def get_route_stops_endpoint(origin: str, destination: str, departure_date
     """
     origin = origin.upper()
     destination = destination.upper()
+    data_dir = Path(__file__).parent.parent / "data"
+    origin_codes = set(location_codes_for_query(origin, data_dir))
+    dest_codes = set(location_codes_for_query(destination, data_dir))
     
     # Priority 1: Try to load from NRDP timetable parsed data
-    timetable_file = Path(__file__).parent.parent / "data" / "timetable_parsed.json"
+    timetable_file = data_dir / "timetable_parsed.json"
     
     if timetable_file.exists():
         try:
@@ -821,11 +828,9 @@ async def get_route_stops_endpoint(origin: str, destination: str, departure_date
             
             services = timetable_data.get('services', [])
             
-            # Find services that match the route
-            # Try exact match first
             matching_services = [
-                s for s in services 
-                if s.get('origin_location') == origin and s.get('destination_location') == destination
+                s for s in services
+                if s.get('origin_location') in origin_codes and s.get('destination_location') in dest_codes
             ]
             
             # If no exact match, try to find services that pass through both stations
