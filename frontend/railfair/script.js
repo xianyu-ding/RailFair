@@ -204,6 +204,38 @@ function normalizeApiPayload(response) {
     return response;
 }
 
+/** Cloudflare Workers build returns a lone `timetable` without `service_id`; FastAPI+NRDP returns `timetables` with IDs. */
+function isLimitedTimetableApiPayload(data) {
+    if (!data) return true;
+    const raw = data.timetables;
+    const rows = Array.isArray(raw) && raw.length > 0
+        ? raw
+        : (data.timetable ? [data.timetable] : []);
+    if (rows.length > 1) return false;
+    if (rows.length === 0) return true;
+    const sid = rows[0].service_id;
+    if (sid != null && String(sid).length > 0 && String(sid) !== 'unknown') {
+        return false;
+    }
+    return true;
+}
+
+function updateTimetableSourceNotice(data) {
+    const el = document.getElementById('timetable-source-notice');
+    if (!el) return;
+    if (isLimitedTimetableApiPayload(data)) {
+        el.classList.remove('hidden');
+        el.innerHTML =
+            'The live API only returned <strong>one</strong> placeholder timetable (no per-train list). '
+            + 'That is expected on the <strong>Cloudflare Workers</strong> deployment. '
+            + 'For real multi-train NRDP times, run the repo&rsquo;s <strong>FastAPI</strong> backend (<code>api/app.py</code>) '
+            + 'with <code>timetable_parsed.json</code> on the server and point the site at that API.';
+    } else {
+        el.classList.add('hidden');
+        el.textContent = '';
+    }
+}
+
 function formatTimeLabel(value) {
     if (!value) return '--:--';
     const date = typeof value === 'string' ? new Date(value) : value;
@@ -278,16 +310,20 @@ function minutesFromAnchor(timetable, anchorDate) {
     return Math.abs(dep.getTime() - anchorDate.getTime()) / 60000;
 }
 
-function getDisplayTimetables() {
+function getDisplayTimetableRows() {
     if (showAllServicesToday || !originalSearchAnchor || Number.isNaN(originalSearchAnchor.getTime())) {
-        return [...sessionAllTimetables];
+        return { rows: [...sessionAllTimetables], relaxedWindow: false };
     }
-    return sessionAllTimetables.filter((t) => {
+    const filtered = sessionAllTimetables.filter((t) => {
         if (minutesFromAnchor(t, originalSearchAnchor) <= NEARBY_WINDOW_MINUTES) return true;
         return extraAnchorWindows.some(
             (a) => a && !Number.isNaN(a.getTime()) && minutesFromAnchor(t, a) <= NEARBY_WINDOW_MINUTES
         );
     });
+    if (filtered.length === 0 && sessionAllTimetables.length > 0) {
+        return { rows: [...sessionAllTimetables], relaxedWindow: true };
+    }
+    return { rows: filtered, relaxedWindow: false };
 }
 
 function updateScheduleFilterHint() {
@@ -295,14 +331,18 @@ function updateScheduleFilterHint() {
     const btn = document.getElementById('toggle-schedule-scope');
     if (!el || !btn) return;
     const total = sessionAllTimetables.length;
-    const shown = getDisplayTimetables().length;
+    const { rows: displayRows, relaxedWindow } = getDisplayTimetableRows();
+    const shown = displayRows.length;
     if (total === 0) {
         el.textContent = '';
         btn.classList.add('hidden');
         return;
     }
     btn.classList.remove('hidden');
-    if (showAllServicesToday) {
+    if (relaxedWindow) {
+        el.textContent = `No departures fell in the ±${NEARBY_WINDOW_MINUTES} min window vs your time (often UTC vs local). Showing all ${total} loaded.`;
+        btn.textContent = 'Show all services today';
+    } else if (showAllServicesToday) {
         el.textContent = `Showing all ${total} service${total === 1 ? '' : 's'} for this route on this date.`;
         btn.textContent = `Show only ±${NEARBY_WINDOW_MINUTES} min`;
     } else {
@@ -317,7 +357,7 @@ function redrawTimetableCards() {
     const pagination = latestPagination;
     if (!prediction || sessionAllTimetables.length === 0) return;
 
-    const displayList = getDisplayTimetables();
+    const { rows: displayList } = getDisplayTimetableRows();
     const originCode = document.getElementById('origin').value.toUpperCase();
     const destCode = document.getElementById('destination').value.toUpperCase();
 
@@ -374,7 +414,8 @@ searchForm.addEventListener('submit', async (e) => {
                 destination,
                 departure_date: date,
                 departure_time: time,
-                include_fares: true
+                include_fares: true,
+                use_cache: false
             }),
             mode: 'cors', // Explicitly enable CORS
             credentials: 'omit' // Don't send cookies
@@ -411,6 +452,7 @@ searchForm.addEventListener('submit', async (e) => {
         document.getElementById('route-date').textContent = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
         const payload = normalizeApiPayload(data);
+        updateTimetableSourceNotice(payload);
         const anchorDate = new Date(`${date}T${time}`);
         renderResults(payload, false, { anchorDate });
 
@@ -1044,7 +1086,8 @@ async function loadMoreServices(direction) {
                 destination,
                 departure_date: newDate,
                 departure_time: newTimeStr,
-                include_fares: true
+                include_fares: true,
+                use_cache: false
             }),
             mode: 'cors',
             credentials: 'omit'
@@ -1056,6 +1099,7 @@ async function loadMoreServices(direction) {
 
         const data = await response.json();
         const payload = normalizeApiPayload(data);
+        updateTimetableSourceNotice(payload);
 
         // Append new results (anchor = time used for this request so ±2h window includes new batch)
         renderResults(payload, true, { anchorDate: newTime });
